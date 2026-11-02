@@ -33,6 +33,11 @@ input,textarea,[contenteditable="true"],[contenteditable=""]{-webkit-user-select
 .item .controls .action-delete{top:var(--item-control-inset);left:var(--item-control-inset)}
 .item .controls .action-replace{bottom:var(--item-control-inset);right:var(--item-control-inset);color:#5146d8}
 .item .controls .action-crop{bottom:var(--item-control-inset);left:var(--item-control-inset);color:#5146d8}
+.item .controls .action-up{top:var(--item-control-inset);left:50%;transform:translateX(-50%);color:#5146d8}
+.item .controls .action-down{bottom:var(--item-control-inset);left:50%;transform:translateX(-50%);color:#5146d8}
+.item.paired-controls .controls .action-up,.item.paired-controls .controls .action-down{left:calc(50% - var(--item-control-size)/2 - var(--paired-arrow-gap)/2)}
+.item .controls .action-up-pair,.item .controls .action-down-pair{left:calc(50% + var(--item-control-size)/2 + var(--paired-arrow-gap)/2);transform:translateX(-50%);background:#f0edff;color:#5146d8}
+.item .controls .action-up-pair{top:var(--item-control-inset)}.item .controls .action-down-pair{bottom:var(--item-control-inset)}
 .item .controls .action-other{top:50%;left:50%;transform:translate(-50%,-50%);width:var(--other-face-width);gap:calc(var(--item-control-size)*.12);background:#5146d8;color:white;border-color:#5146d8;direction:rtl}
 .item .controls .action-other svg{width:var(--other-face-icon);height:var(--other-face-icon)}
 .item:not(.filled) .controls .action-other{top:auto;bottom:var(--item-control-inset);left:auto;right:var(--item-control-inset);transform:none;width:var(--item-control-size)}
@@ -77,14 +82,18 @@ main{padding-bottom:32px}.toast{bottom:max(20px,env(safe-area-inset-bottom))}
     main{padding-bottom:24px}
 }
 .page-end-actions{display:flex;justify-content:center;direction:rtl;padding:26px 0 4px;max-width:100%}
-#addPage{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:48px;padding:10px 24px;border:2px dashed #aaa3ed;color:#5146d8;background:#fafaff;font-weight:bold}
+#addPage,.insert-page{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:48px;padding:10px 24px;border:2px dashed #aaa3ed;color:#5146d8;background:#fafaff;font-weight:bold;max-width:calc(100vw - 32px)}
+.page-insert-actions{display:flex;justify-content:center;align-items:center;direction:rtl;flex:none;max-width:100%}.insert-page{min-height:44px;padding:8px 18px;font-size:13px}.insert-page svg{width:18px;height:18px;flex:none}
 #shareDialog .share-formats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .share-formats button{min-height:70px;display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center}
 .share-formats button[aria-pressed="true"]{border:2px solid #5146d8;background:#f1efff;color:#5146d8}
 #shareSend{width:100%;margin-top:12px}#shareStatus{min-height:40px;margin-top:12px}
+.export-name{display:grid;gap:7px;margin:12px 0 16px}.export-name label{font-size:14px;font-weight:bold}.export-name input{width:100%;min-width:0;min-height:44px;border:1px solid #d8e0eb;border-radius:10px;padding:10px;font-size:16px;background:#fff;color:#203047}.export-name small{line-height:1.6}
+#actionMessage{white-space:pre-line}#actionDialog .actions{justify-content:flex-start;margin-top:18px}
+#columnLayoutDialog .column-options{display:grid;gap:10px}#columnLayoutDialog .column-options button{min-height:70px;display:flex;flex-direction:column;gap:7px;align-items:flex-start;text-align:right}
 #shareFiles{display:grid;gap:8px;margin-top:12px}#shareFiles a{display:block;min-height:44px;padding:10px;border:1px solid #d8e0eb;border-radius:9px;color:#5146d8;overflow-wrap:anywhere;text-decoration:none}
 @media(pointer:coarse){select,input{font-size:16px!important}}
-@media print{.page-end-actions{display:none!important}}
+@media print{.page-end-actions,.page-insert-actions{display:none!important}}
 </style>
 <header class="app-header">
     <small id="saveStatus" class="toolbar-status" role="status">جاهز للعمل • يعمل دون إنترنت</small>
@@ -101,38 +110,48 @@ main{padding-bottom:32px}.toast{bottom:max(20px,env(safe-area-inset-bottom))}
         <details id="toolbarMore" class="toolbar-more" open>
             <summary class="more-summary" title="المزيد من الأدوات" aria-label="المزيد من الأدوات"><svg class="toolbar-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></summary>
             <div class="toolbar-extra">
-                <button id="editSelected" data-icon="image">اختيار / تغيير الصورة</button>
                 <button id="saveProject" data-icon="save">حفظ نسخة</button><button id="loadProject" data-icon="open">فتح نسخة</button>
-                <button id="deleteSelected" class="danger" data-icon="delete" disabled>حذف المستمسك</button><button id="deletePage" class="danger" data-icon="deletePage">حذف الصفحة</button>
+                <button id="deletePage" class="danger" data-icon="deletePage">حذف الصفحة</button><button id="clearAll" class="danger" data-icon="clear">تفريغ كل الصفحات</button>
             </div>
         </details>
     </div>
 </header>
 <main id="workspace" aria-label="مساحة العمل"><div id="pages"></div><div class="page-end-actions"><button id="addPage"><svg class="toolbar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 3H5v18h14V8l-5-5v5h5M8 14h8M12 10v8"/></svg>إضافة صفحة</button></div></main>
-<dialog id="shareDialog"><div class="dialog-head"><h2>مشاركة المستمسكات</h2><button data-close="shareDialog" aria-label="إغلاق">✕</button></div><p class="note">اختر الصيغة لتجهيز جميع الصفحات، ثم شارك الملفات أو نزّلها. تُصدّر الصور وحدها على خلفية بيضاء.</p><div class="share-formats"><button data-format="pdf" aria-pressed="false"><strong>PDF</strong><small>كل الصفحات في ملف واحد</small></button><button data-format="png" aria-pressed="false"><strong>PNG</strong><small>صور دون فقدان إضافي للجودة</small></button><button data-format="jpeg" aria-pressed="false"><strong>JPG</strong><small>صور بحجم أصغر</small></button><button data-format="webp" aria-pressed="false"><strong>WebP</strong><small>ضغط جيد للمتصفحات الحديثة</small></button></div><p id="shareStatus" class="note" role="status">اختر الصيغة المطلوبة.</p><button id="shareSend" class="primary" disabled>تجهيز الملفات أولًا</button><div id="shareFiles" aria-label="تنزيل الملفات بشكل منفصل"></div></dialog>
+<dialog id="shareDialog"><div class="dialog-head"><h2>مشاركة المستمسكات</h2><button data-close="shareDialog" aria-label="إغلاق">✕</button></div><p class="note">اختر الصيغة لتجهيز جميع الصفحات، ثم شارك الملفات أو نزّلها. تُصدّر الصور وحدها على خلفية بيضاء.</p><div class="export-name"><label for="exportFilename">اسم الملف</label><input id="exportFilename" type="text" maxlength="120" dir="auto" autocomplete="off" spellcheck="false" aria-describedby="exportFilenameHint"><small id="exportFilenameHint">يمكن تعديل الاسم قبل المشاركة أو التنزيل. إذا تُرك فارغًا، يُستخدم «مستمسكات» مع تاريخ اليوم. تُضاف الصيغة تلقائيًا.</small></div><div class="share-formats"><button data-format="pdf" aria-pressed="false"><strong>PDF</strong><small>كل الصفحات في ملف واحد</small></button><button data-format="png" aria-pressed="false"><strong>PNG</strong><small>صور دون فقدان إضافي للجودة</small></button><button data-format="jpeg" aria-pressed="false"><strong>JPG</strong><small>صور بحجم أصغر</small></button><button data-format="webp" aria-pressed="false"><strong>WebP</strong><small>ضغط جيد للمتصفحات الحديثة</small></button></div><p id="shareStatus" class="note" role="status">اختر الصيغة المطلوبة.</p><button id="shareSend" class="primary" disabled>تجهيز الملفات أولًا</button><div id="shareFiles" aria-label="تنزيل الملفات بشكل منفصل"></div></dialog>
 <dialog id="templatesDialog"><div class="dialog-head"><h2>اختر نوع المستمسك</h2><button data-close="templatesDialog" aria-label="إغلاق">✕</button></div><div class="templates" id="templates"></div><p class="note">الأبعاد أبعاد قوالب قابلة للاستخدام، ويجب التحقق من مطابقتها للمستمسك الأصلي. حرّك المستمسك من مقبض ↔، ومرّر من أي مكان آخر.</p></dialog>
 <dialog id="cropDialog"><div class="dialog-head"><h2>قص الصورة والفلاتر</h2><button data-close="cropDialog" aria-label="إلغاء التعديل">✕</button></div><p id="cropHelp" class="note">حدّد زوايا الوثيقة ثم اضغط «إنهاء القص» لمعاينتها مكبّرة دون المنطقة المظللة.</p><div class="crop-mode-bar"><button id="cropMode" class="primary">إنهاء القص</button><span class="note">لن تتغير صورة الورقة حتى تضغط «اعتماد الصورة».</span></div><div class="crop-stage" id="cropStage"><canvas id="cropCanvas"></canvas><canvas id="cropLoupe" aria-hidden="true"></canvas></div><p id="edgeStatus" class="crop-status" role="status">يمكن اكتشاف حواف المستمسك تلقائيًا أو ضبط الزوايا يدويًا.</p><div class="filter-tools"><label for="imageFilter">الفلتر<select id="imageFilter"><option value="color">ألوان أصلية</option><option value="auto">تحسين تلقائي</option><option value="clean">مسح ملون وتقليل الظلال</option><option value="gray">تدرج رمادي</option><option value="bw">أبيض وأسود ثابت</option><option value="text">نص واضح (إضاءة متفاوتة)</option><option value="sharp">وضوح التفاصيل</option><option value="soft">تقليل التشويش</option></select></label><label for="imageBrightness">الإضاءة <output id="brightnessValue">0</output><input id="imageBrightness" type="range" min="-50" max="50" value="0"></label><label for="imageContrast">التباين <output id="contrastValue">100%</output><input id="imageContrast" type="range" min="50" max="200" value="100"></label></div><p id="filterHint" class="note" aria-live="polite"></p><div class="actions"><button id="applyCrop" class="primary">اعتماد الصورة</button><button id="chooseAnotherImage">اختيار صورة أخرى</button><button id="autoCrop">اكتشاف الحواف</button><button id="resetCrop">كامل الصورة</button><button id="resetFilters">إعادة الفلاتر</button><button id="rotateCrop">تدوير 90°</button></div><input type="file" id="cropFile" accept="image/*" hidden></dialog>
 <input type="file" id="file" accept="image/*"><input type="file" id="projectFile" accept=".json,application/json"><div class="toast" id="toast" role="status"></div>
+<dialog id="columnLayoutDialog"><div class="dialog-head"><h2>توزيع المستمسكات في الوسط</h2><button data-close="columnLayoutDialog" aria-label="إلغاء">✕</button></div><p id="columnLayoutSummary" class="note"></p><div class="column-options"><button data-column-count="1"><strong>صفحة لكل مستمسك</strong><small>الوجه والظهر في عمود واحد وسط الصفحة</small></button><button data-column-count="2"><strong>صفحة لكل مستمسكين</strong><small>حتى مستمسكين بوجهيهما في الصفحة، ثم صفحات إضافية للبقية</small></button></div><p class="note">تتساوى المسافة أعلى المجموعة وأسفلها، مع الحفاظ على القياسات. إذا لم يتسع مستمسكان معًا، يُوزَّعان على صفحتين.</p></dialog>
+<dialog id="clearAllDialog" aria-labelledby="clearAllTitle"><h2 id="clearAllTitle">تفريغ كل الصفحات؟</h2><p class="note">سيتم حذف جميع المستمسكات وصورها وصفحات العمل المحفوظة، وحفظ صفحة فارغة بدلها. هل تريد المتابعة؟</p><p id="clearAllStatus" class="note" role="status"></p><div class="actions"><button id="cancelClearAll" data-close="clearAllDialog" autofocus>إلغاء</button><button id="confirmClearAll" class="danger">نعم، تفريغ كل الصفحات</button></div></dialog>
+<dialog id="actionDialog" aria-labelledby="actionTitle" aria-describedby="actionMessage"><div class="dialog-head"><h2 id="actionTitle">تأكيد الإجراء</h2><button data-close="actionDialog" aria-label="إلغاء">✕</button></div><p id="actionMessage" class="note"></p><div class="actions"><button id="actionCancel" data-close="actionDialog" autofocus>إلغاء</button><button id="actionAccept" class="danger">تأكيد</button></div></dialog>
 <script>
 'use strict';
 // Model: page positions stay in A4 pixels, independently of display scale.
 const W=794,H=1123,KEY='iraqi-documents-v2';
 const $=id=>document.getElementById(id), uid=()=>globalThis.crypto?.randomUUID?.()||'id-'+Date.now()+'-'+Math.random().toString(36).slice(2);
-const TYPES=[['national','البطاقة الوطنية الموحدة',85,55],['five','خمس بطاقات وطنية (عشرة أوجه مصغرة)',85,55],['civil','هوية الأحوال المدنية',75,105],['citizen','شهادة الجنسية العراقية',165,200],['voter','بطاقة الناخب',85,55],['residence','بطاقة السكن',90,60],['ration','البطاقة التموينية',90,60],['passport','جواز السفر',125,88],['birth','شهادة الولادة',210,297],['marriage','عقد الزواج',210,297],['death','شهادة الوفاة',210,297]];
-let state={version:2,pages:[{id:uid(),items:[]}],active:null},selected=null,history=[],scale=1,autoFit=true,db=null,saveTimer,saveChain=Promise.resolve(),crop=null;
+const TYPES=[['national','البطاقة الوطنية الموحدة',85,55],['five','خمس بطاقات وطنية (عشرة أوجه بحجم طبيعي)',85,55],['civil','هوية الأحوال المدنية',75,105],['citizen','شهادة الجنسية العراقية',165,200],['voter','بطاقة الناخب',85,55],['residence','بطاقة السكن',90,60],['ration','البطاقة التموينية',90,60],['passport','جواز السفر',125,88],['birth','شهادة الولادة',210,297],['marriage','عقد الزواج',210,297],['death','شهادة الوفاة',210,297]];
+let state={version:2,pages:[{id:uid(),items:[]}],active:null},selected=null,history=[],scale=1,autoFit=true,db=null,saveTimer,saveChain=Promise.resolve(),crop=null,workspaceEpoch=0;
 state.active=state.pages[0].id;
 const page=()=>state.pages.find(p=>p.id===state.active)||state.pages[0];
 const findItem=id=>state.pages.flatMap(p=>p.items).find(i=>i.id===id);
 function toast(message){$('toast').textContent=message;$('toast').style.display='block';clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('toast').style.display='none',3500)}
 function checkpoint(){history.push(JSON.stringify(state));if(history.length>20)history.shift()}
-function changed(){render();scheduleSave()}
+function ensureWorkspacePages(project){
+    if(!project.pages.length)project.pages.push({id:uid(),items:[],layout:'rows'});
+    if(!project.pages.some(p=>p.id===project.active))project.active=project.pages[0].id;
+    return project;
+}
+function changed(){ensureWorkspacePages(state);if(selected&&!findItem(selected))selected=null;render();scheduleSave()}
 function scheduleSave(){ $('saveStatus').textContent='جارٍ حفظ العمل…';clearTimeout(saveTimer);saveTimer=setTimeout(persist,350) }
-function persist(){const snapshot=JSON.stringify(state);saveChain=saveChain.catch(()=>{}).then(()=>new Promise(resolve=>{if(!db){$('saveStatus').textContent='الحفظ التلقائي غير متاح • استخدم حفظ نسخة';resolve();return}const tx=db.transaction('projects','readwrite');tx.objectStore('projects').put(snapshot,KEY);tx.oncomplete=()=>{$('saveStatus').textContent='تم الحفظ على هذا الجهاز';resolve()};tx.onerror=()=>{$('saveStatus').textContent='تعذر الحفظ • احفظ نسخة من العمل';resolve()}}));return saveChain}
-async function restore(){try{db=await new Promise((resolve,reject)=>{const r=indexedDB.open(KEY,1);r.onupgradeneeded=()=>r.result.createObjectStore('projects');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error)});const saved=await new Promise((resolve,reject)=>{const r=db.transaction('projects').objectStore('projects').get(KEY);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error)});if(saved){state=validate(JSON.parse(saved));$('saveStatus').textContent='تم استرجاع العمل المحفوظ'}}catch(e){$('saveStatus').textContent='الحفظ التلقائي غير متاح • استخدم حفظ نسخة'}render()}
-function validate(s){if(s?.version!==2||!Array.isArray(s.pages)||!s.pages.length||s.pages.length>100)throw Error('ملف مشروع غير صالح');const ids=new Set();for(const p of s.pages){if(typeof p.id!=='string'||ids.has(p.id)||!Array.isArray(p.items)||p.items.length>100)throw Error('بيانات صفحات غير صالحة');ids.add(p.id);for(const i of p.items){if(typeof i.id!=='string'||ids.has(i.id)||![i.x,i.y,i.w,i.h].every(Number.isFinite)||i.w<1||i.h<1||i.w>W||i.h>H||i.x<0||i.y<0||i.x+i.w>W+.1||i.y+i.h>H+.1||typeof i.label!=='string'||(i.image&&!/^data:image\/(jpeg|png|webp);base64,/.test(i.image)))throw Error('بيانات مستمسك غير صالحة');if(i.edit&&!validEdit(i.edit))throw Error('بيانات تحرير الصورة غير صالحة');ids.add(i.id)}}validateDocumentLinks(s);ensureDocumentPairs(s);if(!s.pages.some(p=>p.id===s.active))s.active=s.pages[0].id;return s}
+function persist(){const snapshot=JSON.stringify(state);saveChain=saveChain.catch(()=>{}).then(()=>new Promise(resolve=>{if(!db){$('saveStatus').textContent='الحفظ التلقائي غير متاح • استخدم حفظ نسخة';resolve(false);return}const tx=db.transaction('projects','readwrite');tx.objectStore('projects').put(snapshot,KEY);tx.oncomplete=()=>{$('saveStatus').textContent='تم الحفظ على هذا الجهاز';resolve(true)};tx.onerror=()=>{$('saveStatus').textContent='تعذر الحفظ • احفظ نسخة من العمل';resolve(false)}}));return saveChain}
+async function restore(){const epoch=workspaceEpoch;try{db=await new Promise((resolve,reject)=>{const r=indexedDB.open(KEY,1);r.onupgradeneeded=()=>r.result.createObjectStore('projects');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error)});const saved=await new Promise((resolve,reject)=>{const r=db.transaction('projects').objectStore('projects').get(KEY);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error)});if(saved&&epoch===workspaceEpoch){state=validate(JSON.parse(saved));$('saveStatus').textContent='تم استرجاع العمل المحفوظ'}}catch(e){$('saveStatus').textContent='الحفظ التلقائي غير متاح • استخدم حفظ نسخة'}render()}
+function validate(s){if(s?.version!==2||!Array.isArray(s.pages)||!s.pages.length||s.pages.length>100)throw Error('ملف مشروع غير صالح');const ids=new Set();for(const p of s.pages){if(typeof p.id!=='string'||ids.has(p.id)||!Array.isArray(p.items)||p.items.length>100)throw Error('بيانات صفحات غير صالحة');ids.add(p.id);for(const i of p.items){if(typeof i.id!=='string'||ids.has(i.id)||![i.x,i.y,i.w,i.h].every(Number.isFinite)||i.w<1||i.h<1||i.w>W||i.h>H||i.x<0||i.y<0||i.x+i.w>W+.1||i.y+i.h>H+.1||typeof i.label!=='string'||(i.image&&!/^data:image\/(jpeg|png|webp);base64,/.test(i.image)))throw Error('بيانات مستمسك غير صالحة');if(i.edit&&!validEdit(i.edit))throw Error('بيانات تحرير الصورة غير صالحة');ids.add(i.id)}}validateDocumentLinks(s);ensureDocumentPairs(s);return ensureWorkspacePages(s)}
 function isDoubleSided(templateId){const t=TYPES.find(t=>t[0]===templateId);return !!t&&t[2]<210&&templateId!=='citizen'}
 function validateDocumentLinks(s){
     const groups=new Map();
+    for(const p of s.pages)if(p.layout!==undefined&&!['rows','column'].includes(p.layout))throw Error('نمط ترتيب الصفحة غير صالح');
+    for(const p of s.pages)if(p.documentsPerPage!==undefined&&![1,2].includes(p.documentsPerPage))throw Error('عدد المستمسكات في الصفحة غير صالح');
+    for(const p of s.pages)if(p.keepEmpty!==undefined&&typeof p.keepEmpty!=='boolean')throw Error('حالة الصفحة الفارغة غير صالحة');
     for(const i of s.pages.flatMap(p=>p.items)){
         if(i.templateId!==undefined&&!TYPES.some(t=>t[0]===i.templateId))throw Error('نوع مستمسك غير صالح');
         if(i.pairId!==undefined||i.side!==undefined){
@@ -176,23 +195,35 @@ const FILTER_PRESETS={
 };
 function validEdit(edit){return typeof edit.source==='string'&&/^data:image\/(jpeg|png|webp);base64,/.test(edit.source)&&Array.isArray(edit.points)&&edit.points.length===4&&edit.points.every(p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.y)&&p.x>=0&&p.x<=1&&p.y>=0&&p.y<=1)&&validQuad(edit.points)&&Object.hasOwn(FILTER_PRESETS,edit.filter)&&Number.isFinite(edit.brightness)&&edit.brightness>=-50&&edit.brightness<=50&&Number.isFinite(edit.contrast)&&edit.contrast>=50&&edit.contrast<=200}
 function computeScale(){if(autoFit)scale=Math.min(1,Math.max(.15,($('workspace').clientWidth-(innerWidth<600?20:32))/W));$('pages').style.setProperty('--control-size',(44/scale)+'px');$('pages').style.setProperty('--control-font',(18/scale)+'px');$('zoomValue').textContent=Math.round(scale*100)+'%'}
-function render(){computeScale();$('pages').replaceChildren();state.pages.forEach((p,index)=>{const slot=document.createElement('section');slot.className='sheet-slot';slot.style.width=W*scale+'px';slot.style.height=H*scale+'px';slot.dataset.page=p.id;const el=document.createElement('div');el.className='page'+(p.id===state.active?' active':'');el.style.transform=`scale(${scale})`;el.addEventListener('click',()=>{activate(p.id);selectItem(null)});const label=document.createElement('span');label.className='page-label';label.textContent='A4 • '+(index+1);el.append(label);p.items.forEach(i=>el.append(renderItem(i,p)));slot.append(el);$('pages').append(slot)});updateItemActions()}
+function renderPageInsertion(p,index){
+    const row=document.createElement('div');row.className='page-insert-actions';
+    const button=document.createElement('button');button.type='button';button.className='insert-page';button.dataset.beforePage=p.id;
+    button.title=index?'إضافة صفحة بين الصفحة '+index+' والصفحة '+(index+1):'إضافة صفحة قبل الصفحة الأولى';button.setAttribute('aria-label',button.title);
+    button.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
+    const label=document.createElement('span');label.textContent=index?'إضافة صفحة هنا':'إضافة صفحة للأعلى';button.append(label);
+    button.onclick=()=>{const position=state.pages.findIndex(current=>current.id===p.id);if(position>=0)insertWorkspacePage(position)};
+    row.append(button);return row;
+}
+function render(){computeScale();$('pages').replaceChildren();state.pages.forEach((p,index)=>{const slot=document.createElement('section');slot.className='sheet-slot';slot.style.width=W*scale+'px';slot.style.height=H*scale+'px';slot.dataset.page=p.id;const el=document.createElement('div');el.className='page'+(p.id===state.active?' active':'');el.style.transform=`scale(${scale})`;el.addEventListener('click',()=>{activate(p.id);selectItem(null)});const label=document.createElement('span');label.className='page-label';label.textContent='A4 • '+(index+1);el.append(label);p.items.forEach(i=>el.append(renderItem(i,p)));slot.append(el);$('pages').append(renderPageInsertion(p,index),slot)})}
 function activate(id){state.active=id;document.querySelectorAll('.sheet-slot').forEach(s=>s.firstChild.classList.toggle('active',s.dataset.page===id));scheduleSave()}
 function updateToolbarLabel(id,text){const button=$(id),label=button.querySelector('.toolbar-label');if(label)label.textContent=text;else button.textContent=text;button.title=text;button.setAttribute('aria-label',text)}
-function updateItemActions(){const item=findItem(selected);$('editSelected').disabled=!item;updateToolbarLabel('editSelected',item?.image?'تغيير صورة المستمسك':'اختيار صورة للمستمسك');$('deleteSelected').disabled=!item}
-function selectItem(id){selected=id;document.querySelectorAll('.item').forEach(el=>el.classList.toggle('selected',el.dataset.id===id));updateItemActions()}
+function selectItem(id){selected=id;document.querySelectorAll('.item').forEach(el=>el.classList.toggle('selected',el.dataset.id===id))}
 function clearSelectionOutside(event){if(!event.target.closest('.item,.app-header,dialog'))selectItem(null)}
 const ITEM_ICONS={
     move:'<path d="M4 12h16M4 12l4-4M4 12l4 4M20 12l-4-4M20 12l-4 4"/>',
     delete:'<path d="m6 6 12 12M18 6 6 18"/>',
     replace:'<path d="M4 7h15m-4-4 4 4-4 4M20 17H5m4-4-4 4 4 4"/>',
     crop:'<path d="M7 3v12a2 2 0 0 0 2 2h12M3 7h12a2 2 0 0 1 2 2v12"/>',
-    other:'<rect x="3" y="6" width="13" height="14" rx="2"/><path d="M8 3h11a2 2 0 0 1 2 2v10M7 13h5M9.5 10.5v5"/>'
+    other:'<rect x="3" y="6" width="13" height="14" rx="2"/><path d="M8 3h11a2 2 0 0 1 2 2v10M7 13h5M9.5 10.5v5"/>',
+    up:'<path d="M12 20V4m-6 6 6-6 6 6"/>',
+    down:'<path d="M12 4v16m-6-6 6 6 6-6"/>',
+    'up-pair':'<path d="M7 20V4M3 8l4-4 4 4M17 20V4m-4 4 4-4 4 4"/>',
+    'down-pair':'<path d="M7 4v16m-4-4 4 4 4-4M17 4v16m-4-4 4 4 4-4"/>'
 };
-function itemControlMetrics(item,displayScale){
-    // Four corner buttons must remain separate even on the five-card phone template.
+function itemControlMetrics(item,displayScale,hasMissingFace=false,hasPairControls=false){
+    // Reserve three columns and, for an orphan, a third row for restoring its other face.
     const shortest=Math.min(item.w,item.h)*displayScale;
-    const inset=Math.min(6,shortest*.04),size=Math.min(44,Math.max(1,(shortest-2*inset-4)/2));
+    const columns=hasPairControls?4:3,inset=Math.min(6,shortest*(hasMissingFace?.025:.04)),size=Math.min(44,Math.max(1,(shortest-2*inset-4)/(hasMissingFace?3:2)),Math.max(1,(item.w*displayScale-2*inset-4*(columns-1))/columns));
     return {size:size/displayScale,inset:inset/displayScale};
 }
 function itemAction(kind,label,handler){
@@ -205,7 +236,9 @@ function renderItem(i,p){
     const el=document.createElement('div');el.className='item'+(i.image?' filled':'')+(selected===i.id?' selected':'');el.dataset.id=i.id;
     el.tabIndex=0;el.setAttribute('role','group');el.setAttribute('aria-label',i.label);el.addEventListener('focus',()=>{activate(p.id);selectItem(i.id)});
     Object.assign(el.style,{left:i.x+'px',top:i.y+'px',width:i.w+'px',height:i.h+'px'});
-    const metrics=itemControlMetrics(i,scale);el.style.setProperty('--item-control-size',metrics.size+'px');el.style.setProperty('--item-control-inset',metrics.inset+'px');
+    const pairFaces=alignedDocumentPair(i.id),hasPairControls=pairFaces.length===2;
+    if(hasPairControls)el.className+=' paired-controls';
+    const metrics=itemControlMetrics(i,scale,missingOtherFace(i),hasPairControls);el.style.setProperty('--item-control-size',metrics.size+'px');el.style.setProperty('--item-control-inset',metrics.inset+'px');el.style.setProperty('--paired-arrow-gap',4/scale+'px');
     if(i.image){const img=new Image();img.src=i.image;img.alt=i.label;img.draggable=false;el.append(img)}
     else{const text=document.createElement('span');text.className='caption';text.textContent=i.label;el.append(text);const add=document.createElement('button');add.textContent='＋ إضافة صورة';add.onclick=e=>{e.stopPropagation();activate(p.id);selectItem(i.id);openImagePicker(i.id)};el.append(add)}
     const controls=document.createElement('div');controls.className='controls';
@@ -214,6 +247,15 @@ function renderItem(i,p){
     if(i.image){
         controls.append(itemAction('replace','استبدال صورة '+i.label,()=>{activate(p.id);selectItem(i.id);openImagePicker(i.id)}));
         controls.append(itemAction('crop','قص الصورة والفلاتر: '+i.label,()=>{activate(p.id);selectItem(i.id);editItemImage(i.id)}));
+    }
+    const up=itemAction('up','نقل المستمسك للأعلى',()=>moveDocumentFace(i.id,-1));
+    up.disabled=state.pages.indexOf(p)===0&&i.y<=40&&!p.items.some(other=>other.id!==i.id&&other.y<i.y-1);
+    controls.append(up,itemAction('down','نقل المستمسك للأسفل',()=>moveDocumentFace(i.id,1)));
+    if(hasPairControls){
+        const pairUp=itemAction('up-pair','نقل المستمسك بوجهيه للأعلى',()=>moveDocumentPair(i.id,-1));
+        const {top,minimum}=pairMoveMetrics(pairFaces);
+        pairUp.disabled=state.pages.indexOf(p)===0&&top<=minimum+.01&&!p.items.some(other=>other.pairId!==i.pairId&&other.y<top-1);
+        controls.append(pairUp,itemAction('down-pair','نقل المستمسك بوجهيه للأسفل',()=>moveDocumentPair(i.id,1)));
     }
     if(missingOtherFace(i)){
         const available=i.w*scale-2*(metrics.size+metrics.inset)*scale-12,width=Math.max(metrics.size*scale,Math.min(150,available));
@@ -225,6 +267,142 @@ function renderItem(i,p){
     el.append(controls);el.addEventListener('click',e=>{e.stopPropagation();activate(p.id);selectItem(i.id)});return el
 }
 function deleteItem(id){const p=state.pages.find(p=>p.items.some(i=>i.id===id));if(!p)return;checkpoint();ensureDocumentPairs(state);const removed=p.items.find(i=>i.id===id);if(removed.pairId){const survivor=state.pages.flatMap(p=>p.items).find(i=>i.id!==id&&i.pairId===removed.pairId);if(survivor)survivor.missingFace={pageId:p.id,x:removed.x,y:removed.y,w:removed.w,h:removed.h,label:removed.label}}p.items=p.items.filter(i=>i.id!==id);if(selected===id)selected=null;changed()}
+function overlappingFaces(a,b){return a.x<b.x+b.w-.01&&a.x+a.w>b.x+.01&&a.y<b.y+b.h-.01&&a.y+a.h>b.y+.01}
+function faceFitsPage(face){return face.x>=0&&face.y>=0&&face.x+face.w<=W&&face.y+face.h<=H}
+function appendFacePosition(target,item){
+    const margin=item.h<=H-80?40:0,y=target.items.length?nextY(target):margin,position={x:item.x,y};
+    return faceFitsPage({...item,...position})&&y+item.h<=H-margin?position:null;
+}
+function planVerticalFaceMove(id,direction){
+    if(![-1,1].includes(direction))return null;
+    const sourceIndex=state.pages.findIndex(p=>p.items.some(i=>i.id===id));if(sourceIndex<0)return null;
+    const source=state.pages[sourceIndex],item=source.items.find(i=>i.id===id);
+    const margin=item.h<=H-80?40:0,minimum=margin,maximum=H-margin-item.h;
+    const clampY=y=>Math.max(minimum,Math.min(maximum,y)),step=item.h+28;
+    const gridY=clampY(margin+(direction>0?Math.floor((item.y-margin+.01)/step)+1:Math.ceil((item.y-margin-.01)/step)-1)*step);
+    const rows=source.items.filter(other=>other.id!==id&&(other.y-item.y)*direction>1).sort((a,b)=>Math.abs(a.y-item.y)-Math.abs(b.y-item.y));
+    const rowCandidates=rows.map(other=>other.y);if((gridY-item.y)*direction>.01)rowCandidates.push(gridY);
+    rowCandidates.sort((a,b)=>Math.abs(a-item.y)-Math.abs(b-item.y));
+    if(rowCandidates.length){
+        const moved={...item,y:rowCandidates[0]},collisions=source.items.filter(other=>other.id!==id&&overlappingFaces(moved,other));
+        if(faceFitsPage(moved)&&!collisions.length)return {kind:'move',source,item,positions:[{item,x:moved.x,y:moved.y}]};
+        if(collisions.length===1){
+            const other=collisions[0],swapped={...other,y:item.y},rest=source.items.filter(i=>i.id!==id&&i.id!==other.id);
+            if(Math.abs(other.y-moved.y)<1&&faceFitsPage(moved)&&faceFitsPage(swapped)&&!overlappingFaces(moved,swapped)&&rest.every(i=>!overlappingFaces(moved,i)&&!overlappingFaces(swapped,i)))return {kind:'swap',source,item,other,positions:[{item,x:moved.x,y:moved.y},{item:other,x:swapped.x,y:swapped.y}]};
+        }
+    }
+    // Use vacant space in this column before considering another page, even below the last existing row.
+    const candidates=[gridY,direction>0?maximum:minimum];
+    for(const other of source.items){
+        if(other.id===id)continue;
+        candidates.push(other.y);
+        candidates.push(direction>0?other.y+other.h+28:other.y-item.h-28);
+    }
+    const findFree=values=>[...new Set(values)].filter(y=>(y-item.y)*direction>.01&&y>=minimum&&y<=maximum).sort((a,b)=>Math.abs(a-item.y)-Math.abs(b-item.y)).find(y=>source.items.every(other=>other.id===id||!overlappingFaces({...item,y},other)));
+    let free=findFree(candidates);
+    if(free===undefined)free=findFree(source.items.filter(other=>other.id!==id).map(other=>direction>0?other.y+other.h:other.y-item.h));
+    if(free!==undefined)return {kind:'move',source,item,positions:[{item,x:item.x,y:free}]};
+    if(direction<0&&sourceIndex===0)return {kind:'blocked',message:'المستمسك في أول صف من أول صفحة'};
+    for(let index=sourceIndex+direction;index>=0&&index<state.pages.length;index+=direction){
+        const target=state.pages[index],position=appendFacePosition(target,item);
+        if(position)return {kind:'transfer',source,item,target,position};
+    }
+    const target={id:uid(),items:[],layout:source.layout||'rows'};
+    if(target.layout==='column')target.documentsPerPage=source.documentsPerPage||1;
+    const position=appendFacePosition(target,item);if(!position)return {kind:'blocked',message:'المستمسك لا يتسع في الصفحة بقياسه الحالي'};
+    return {kind:'new-page',source,item,target,position,insertAt:direction>0?state.pages.length:sourceIndex};
+}
+function moveDocumentFace(id,direction){
+    const plan=planVerticalFaceMove(id,direction);if(!plan)return;
+    if(plan.kind==='blocked'){toast(plan.message);return}
+    checkpoint();
+    if(plan.kind==='move'||plan.kind==='swap'){
+        for(const position of plan.positions){position.item.x=position.x;position.item.y=position.y}
+        if(plan.other){const a=plan.source.items.indexOf(plan.item),b=plan.source.items.indexOf(plan.other);[plan.source.items[a],plan.source.items[b]]=[plan.source.items[b],plan.source.items[a]]}
+        state.active=plan.source.id;
+    }else{
+        if(plan.kind==='new-page')state.pages.splice(plan.insertAt,0,plan.target);
+        plan.source.items=plan.source.items.filter(item=>item.id!==id);plan.item.x=plan.position.x;plan.item.y=plan.position.y;plan.target.items.push(plan.item);state.active=plan.target.id;
+
+    }
+    selected=id;changed();
+    if(plan.target)toast('تم النقل إلى الصفحة '+(state.pages.indexOf(plan.target)+1)+' بعد مستمسكاتها');
+    requestAnimationFrame(()=>{const element=[...document.querySelectorAll('.item')].find(element=>element.dataset.id===id);element?.scrollIntoView({behavior:'smooth',block:'center',inline:'nearest'})});
+}
+function alignedDocumentPair(id){
+    const owner=state.pages.find(p=>p.items.some(item=>item.id===id)),item=owner?.items.find(item=>item.id===id);if(!item?.pairId)return [];
+    const faces=state.pages.flatMap(p=>p.items).filter(face=>face.pairId===item.pairId);
+    return faces.length===2&&faces.every(face=>owner.items.includes(face))&&Math.abs(faces[0].y-faces[1].y)<=1?faces:[];
+}
+function pairMoveMetrics(faces){
+    const top=Math.min(...faces.map(face=>face.y)),height=Math.max(...faces.map(face=>face.y+face.h))-top,compact=faces.every(face=>face.templateId==='five');
+    const margin=height<=H-80?(compact?20:40):0,gap=compact?10:28,minimum=Math.min(margin,top),maximum=Math.max(top,H-margin-height);
+    return {top,height,gap,margin,minimum,maximum,origin:compact?(H-(5*height+4*gap))/2:minimum};
+}
+function pairPositionsAt(faces,y){const top=Math.min(...faces.map(face=>face.y));return faces.map(i=>({i,x:i.x,y:y+i.y-top}))}
+function pairPositionsFit(positions,items){
+    const ids=new Set(positions.map(position=>position.i.id)),boxes=positions.map(position=>({...position.i,x:position.x,y:position.y}));
+    return boxes.every((box,index)=>faceFitsPage(box)&&!items.some(other=>!ids.has(other.id)&&overlappingFaces(box,other))&&!boxes.slice(index+1).some(other=>overlappingFaces(box,other)));
+}
+function planLocalPairMove(source,faces,direction){
+    const {top,height,gap,minimum,maximum,origin}=pairMoveMetrics(faces),ids=new Set(faces.map(face=>face.id)),others=source.items.filter(other=>!ids.has(other.id));
+    const step=height+gap,clampY=y=>Math.max(minimum,Math.min(maximum,y));
+    const gridY=clampY(origin+(direction>0?Math.floor((top-origin+.01)/step)+1:Math.ceil((top-origin-.01)/step)-1)*step);
+    const peers=others.filter(other=>faces.some(face=>face.x<other.x+other.w-.01&&face.x+face.w>other.x+.01));
+    const directional=values=>[...new Set(values)].filter(y=>(y-top)*direction>.01&&y>=minimum&&y<=maximum).sort((a,b)=>Math.abs(a-top)-Math.abs(b-top));
+    for(const y of directional([gridY,...peers.map(other=>other.y)])){
+        const positions=pairPositionsAt(faces,y);
+        if(pairPositionsFit(positions,source.items))return {kind:'local',positions};
+        const boxes=positions.map(position=>({...position.i,x:position.x,y:position.y})),collisions=others.filter(other=>boxes.some(box=>overlappingFaces(box,other))),keys=new Set(collisions.map(documentKey));
+        if(keys.size!==1)continue;
+        const neighbor=documentGroups(others).find(group=>group.key===[...keys][0]),neighborTop=Math.min(...neighbor.items.map(other=>other.y));
+        if(Math.abs(neighborTop-y)>1||(neighbor.items.length>1&&!alignedDocumentPair(neighbor.items[0].id).length))continue;
+        const swapped=[...positions,...pairPositionsAt(neighbor.items,top)];
+        if(pairPositionsFit(swapped,source.items))return {kind:'local',positions:swapped,swapKey:neighbor.key};
+    }
+    const vacant=[gridY,direction>0?maximum:minimum,...peers.flatMap(other=>[other.y,direction>0?other.y+other.h+gap:other.y-height-gap])];
+    for(const values of [vacant,peers.map(other=>direction>0?other.y+other.h:other.y-height)])for(const y of directional(values)){
+        const positions=pairPositionsAt(faces,y);if(pairPositionsFit(positions,source.items))return {kind:'local',positions};
+    }
+    return null;
+}
+function appendPairPositions(target,faces){
+    const ids=new Set(faces.map(face=>face.id)),remaining=target.items.filter(item=>!ids.has(item.id));
+    if(target.layout==='column'&&documentGroups(remaining).length>=(target.documentsPerPage||1))return null;
+    const {height,margin,gap}=pairMoveMetrics(faces),top=remaining.length?Math.max(...remaining.map(item=>item.y+item.h))+gap:margin;
+    const positions=pairPositionsAt(faces,top);return top+height<=H-margin&&pairPositionsFit(positions,remaining)?positions:null;
+}
+function planVerticalPairMove(id,direction){
+    if(![-1,1].includes(direction))return null;
+    const faces=alignedDocumentPair(id);if(!faces.length)return null;const item=faces.find(face=>face.id===id);
+    const sourceIndex=state.pages.findIndex(p=>p.items.some(face=>face.id===id)),source=state.pages[sourceIndex];
+    const local=planLocalPairMove(source,faces,direction);if(local)return {...local,source,item,faces};
+    if(direction<0&&sourceIndex===0)return {kind:'blocked',message:'المستمسك بوجهيه في بداية أول صفحة'};
+    for(let pageIndex=sourceIndex+direction;pageIndex>=0&&pageIndex<state.pages.length;pageIndex+=direction){
+        const target=state.pages[pageIndex],positions=appendPairPositions(target,faces);
+        if(positions)return {kind:'transfer',source,item,faces,target,positions};
+    }
+    const target={id:uid(),items:[],layout:source.layout||'rows'};if(target.layout==='column')target.documentsPerPage=source.documentsPerPage||1;
+    const positions=appendPairPositions(target,faces);if(!positions)return {kind:'blocked',message:'لا يتسع المستمسك بوجهيه في صفحة واحدة بقياسه الحالي'};
+    return {kind:'new-page',source,item,faces,target,positions,insertAt:direction>0?state.pages.length:sourceIndex};
+}
+function moveDocumentPair(id,direction){
+    const plan=planVerticalPairMove(id,direction);if(!plan)return;
+    if(plan.kind==='blocked'){toast(plan.message);return}
+    checkpoint();
+    if(plan.kind==='local'){
+        state.active=plan.source.id;
+        if(plan.swapKey){const groups=documentGroups(plan.source.items),a=groups.findIndex(group=>group.key===documentKey(plan.item)),b=groups.findIndex(group=>group.key===plan.swapKey);[groups[a],groups[b]]=[groups[b],groups[a]];plan.source.items=groups.flatMap(group=>group.items)}
+    }
+    else{
+        const ids=new Set(plan.faces.map(face=>face.id));for(const page of state.pages)page.items=page.items.filter(item=>!ids.has(item.id));
+        if(plan.kind==='new-page')state.pages.splice(plan.insertAt,0,plan.target);
+        plan.target.items.push(...plan.faces);state.active=plan.target.id;
+
+    }
+    for(const position of plan.positions){position.i.x=position.x;position.i.y=position.y}
+    selected=id;changed();if(plan.target)toast('تم نقل المستمسك بوجهيه إلى الصفحة '+(state.pages.indexOf(plan.target)+1)+' بعد مستمسكاتها');requestAnimationFrame(()=>{const element=[...document.querySelectorAll('.item')].find(element=>element.dataset.id===id);element?.scrollIntoView({behavior:'smooth',block:'center',inline:'nearest'})});
+}
 function freeFacePosition(p,w,h,preferred){
     const free=(x,y)=>x>=0&&y>=0&&x+w<=W&&y+h<=H&&!p.items.some(i=>x<i.x+i.w+8&&x+w+8>i.x&&y<i.y+i.h+8&&y+h+8>i.y);
     if(preferred&&free(preferred.x,preferred.y))return {x:preferred.x,y:preferred.y};
@@ -346,12 +524,17 @@ function bindDrag(handle,el,i,p){
     };
     const end=e=>{
         if(!drag||(e&&e.pointerId!==drag.id))return;
-        drag=null;el.classList.remove('dragging');clearAlignmentGuides(el.parentElement);scheduleSave();
+        drag=null;el.classList.remove('dragging');clearAlignmentGuides(el.parentElement);changed();
     };
     handle.onpointerup=end;handle.onpointercancel=end;handle.onlostpointercapture=end;
     handle.onclick=e=>e.stopPropagation();
 }
-function newPage(){const p={id:uid(),items:[]};state.pages.push(p);state.active=p.id;return p}
+function newPage(layout=page()?.layout||'rows',index=state.pages.length,reference=page()){const capacity=reference?.documentsPerPage||1,p={id:uid(),items:[],layout};if(layout==='column')p.documentsPerPage=capacity;state.pages.splice(index,0,p);state.active=p.id;return p}
+function insertWorkspacePage(index){
+    if(!Number.isInteger(index)||index<0||index>state.pages.length)return;
+    if(state.pages.length>=100){toast('الحد الأقصى 100 صفحة؛ احفظ هذا العمل وابدأ عملًا جديدًا');return}
+    const reference=state.pages[index]||state.pages[index-1];checkpoint();newPage(reference?.layout||'rows',index,reference);selected=null;changed();goActive();
+}
 function goActive(){requestAnimationFrame(()=>{const slot=[...document.querySelectorAll('.sheet-slot')].find(s=>s.dataset.page===state.active);if(slot){const top=slot.getBoundingClientRect().top+scrollY-document.querySelector('header').offsetHeight-12;window.scrollTo({top,behavior:'smooth'})}})}
 function addBox(p,w,h,x,y,label,metadata={}){const item={id:uid(),w,h,x,y,label,image:null,...metadata};p.items.push(item);return item}
 function nextY(p){return p.items.length?Math.max(...p.items.map(i=>i.y+i.h))+28:40}
@@ -359,33 +542,74 @@ function addTemplate(t){
     checkpoint();let p=page(),w=Math.round(t[2]*W/210),h=Math.round(t[3]*H/297);
     const metadata=(pairId,side)=>({templateId:t[0],pairId,side});
     if(t[2]===210){if(p.items.length)p=newPage();addBox(p,W,H,0,0,t[1],{templateId:t[0]})}
-    else if(!isDoubleSided(t[0])){let y=nextY(p);if(y+h>H-40){p=newPage();y=40}addBox(p,w,h,(W-w)/2,y,t[1],{templateId:t[0]})}
-    else if(t[0]==='five'){
-        if(p.items.length)p=newPage();w=Math.round(w*.85);h=Math.round(h*.85);const gap=(H-80-5*h)/4;
-        for(let j=0;j<5;j++){const pairId=uid();addBox(p,w,h,55,40+j*(h+gap),'الخلف • '+(j+1),metadata(pairId,'back'));addBox(p,w,h,W-55-w,40+j*(h+gap),'الأمام • '+(j+1),metadata(pairId,'front'))}
-    }else{
-        const pairId=uid();
-        if(w*2+100<=W){let y=nextY(p);if(y+h>H-40){p=newPage();y=40}addBox(p,w,h,40,y,t[1]+' • الخلف',metadata(pairId,'back'));addBox(p,w,h,W-40-w,y,t[1]+' • الأمام',metadata(pairId,'front'))}
-        else for(const side of ['front','back']){let y=nextY(p);if(y+h>H-40){p=newPage();y=40}addBox(p,w,h,(W-w)/2,y,t[1]+' • '+(side==='front'?'الأمام':'الخلف'),metadata(pairId,side))}
+    else{
+        const pending=[],mode=t[0]==='five'?'rows':p.layout||'rows';
+        const face=(label,extra)=>pending.push({w,h,label,...extra});
+        if(!isDoubleSided(t[0]))face(t[1],{templateId:t[0]});
+        else if(t[0]==='five'){
+            if(p.items.length)p=newPage(mode);
+            for(let j=0;j<5;j++){const pairId=uid();face('الخلف • '+(j+1),metadata(pairId,'back'));face('الأمام • '+(j+1),metadata(pairId,'front'))}
+        }else{
+            const pairId=uid(),sides=w*2+28<=W-80?['back','front']:['front','back'];
+            for(const side of sides)face(t[1]+' • '+(side==='front'?'الأمام':'الخلف'),metadata(pairId,side));
+        }
+        if(mode==='column'){
+            const capacity=p.documentsPerPage||1;
+            for(const group of documentGroups(pending)){
+                if(documentGroups(p.items).length>=capacity||!computeDocumentLayout([...p.items,...group.items],'column'))p=newPage('column');
+                p.layout='column';p.documentsPerPage=capacity;
+                for(const item of group.items){const {w,h,label,...extra}=item;addBox(p,w,h,0,0,label,extra)}
+                const plan=computeDocumentLayout(p.items,'column');for(const placement of plan){placement.i.x=placement.x;placement.i.y=placement.y}
+            }
+        }else{
+            if(t[0]==='five'){
+                const plan=computeDocumentLayout(pending,'rows');p.layout='rows';
+                for(const position of plan){const {w,h,label,...extra}=position.i;addBox(p,w,h,position.x,position.y,label,extra)}
+            }else for(const row of buildDocumentRows(pending,mode)){
+                let y=nextY(p);if(y+row.height>H-40){p=newPage(mode);y=40}
+                let x=(W-row.width)/2;p.layout=mode;
+                for(const item of row.items){const {w,h,label,...extra}=item;addBox(p,w,h,x,y,label,extra);x+=w+28}
+            }
+        }
     }
     $('templatesDialog').close();changed();goActive();
+}
+function buildDocumentRows(items,mode){
+    const gap=items.length&&items.every(item=>item.templateId==='five')&&mode==='rows'?10:28,available=W-80,rows=[];
+    const ordered=[],seen=new Set();
+    for(const item of items){
+        if(!item.pairId){ordered.push(item);continue}
+        if(seen.has(item.pairId))continue;seen.add(item.pairId);
+        const pair=items.filter(other=>other.pairId===item.pairId);
+        if(mode==='rows'&&pair.length===2&&pair[0].w+pair[1].w+gap<=available)pair.sort((a,b)=>(a.side==='back'?0:1)-(b.side==='back'?0:1));
+        ordered.push(...pair);
+    }
+    let row={items:[],width:0,height:0};
+    for(const item of ordered){
+        const width=row.width+(row.items.length?gap:0)+item.w;
+        // Keep each document's two faces together; an orphan must not pull another pair apart.
+        const differentDocument=row.items.some(other=>(other.pairId||item.pairId)&&other.pairId!==item.pairId);
+        if(row.items.length&&(mode==='column'||width>available||differentDocument)){
+            rows.push(row);row={items:[],width:0,height:0};
+        }
+        row.width+=(row.items.length?gap:0)+item.w;row.height=Math.max(row.height,item.h);row.items.push(item);
+    }
+    if(row.items.length)rows.push(row);
+    return rows;
 }
 function computeDocumentLayout(items,mode){
     if(!['rows','column'].includes(mode))return null;
     if(!items.length)return [];
     if(items.some(i=>!Number.isFinite(i.w)||!Number.isFinite(i.h)||i.w<=0||i.h<=0||i.w>W||i.h>H))return null;
     if(items.length===1&&items[0].w===W&&items[0].h===H)return[{i:items[0],x:0,y:0}];
-    const margin=40,gap=28,available=W-margin*2,rows=[];
-    let row={items:[],width:0,height:0};
-    for(const item of items){
-        const width=row.width+(row.items.length?gap:0)+item.w;
-        if(row.items.length&&(mode==='column'||width>available)){
-            rows.push(row);row={items:[],width:0,height:0};
-        }
-        row.width+=(row.items.length?gap:0)+item.w;row.height=Math.max(row.height,item.h);row.items.push(item);
+    if(mode==='column'){
+        const ordered=documentGroups(items).flatMap(group=>group.items),gap=28,height=ordered.reduce((sum,item)=>sum+item.h,0)+gap*(ordered.length-1);
+        if(height>H-80)return null;
+        let y=(H-height)/2;return ordered.map(i=>{const placement={i,x:(W-i.w)/2,y};y+=i.h+gap;return placement});
     }
-    if(row.items.length)rows.push(row);
-    const placements=[];let y=margin;
+    const compact=items.every(item=>item.templateId==='five'),margin=compact?20:40,gap=compact?10:28,rows=buildDocumentRows(items,mode);
+    const totalHeight=rows.reduce((sum,row)=>sum+row.height,0)+gap*(rows.length-1);
+    const placements=[];let y=compact?(H-totalHeight)/2:margin;
     for(const current of rows){
         if(current.width>W||y+current.height>H-margin)return null;
         // Center each complete row, including the last partial row, in A4 coordinates.
@@ -397,9 +621,51 @@ function computeDocumentLayout(items,mode){
 }
 function arrange(mode){
     if(!mode||!page().items.length)return;
+    if(mode==='column'){requestColumnArrangement();return}
     const placements=computeDocumentLayout(page().items,mode);
     if(!placements){toast('المساحة لا تكفي لهذا الترتيب؛ أضف صفحة أو قلّل عدد المستمسكات');return}
-    checkpoint();placements.forEach(o=>{o.i.x=o.x;o.i.y=o.y});changed();
+    checkpoint();page().layout=mode;placements.forEach(o=>{o.i.x=o.x;o.i.y=o.y});changed();
+}
+function documentKey(item){return item.pairId?'pair:'+item.pairId:item.id?'item:'+item.id:item}
+function documentGroups(items){
+    const groups=[],byKey=new Map();
+    for(const item of items){const key=documentKey(item);if(!byKey.has(key)){const group={key,items:[]};byKey.set(key,group);groups.push(group)}byKey.get(key).items.push(item)}
+    for(const group of groups)group.items.sort((a,b)=>(a.side==='front'?0:a.side==='back'?1:2)-(b.side==='front'?0:b.side==='back'?1:2));
+    return groups;
+}
+function paginateColumnDocuments(groups,capacity){
+    if(![1,2].includes(capacity))return null;
+    const pages=[];let current=[];
+    for(const group of groups){
+        if(!computeDocumentLayout(group.items,'column'))return null;
+        const combined=[...current,...group.items];
+        if(current.length&&(documentGroups(current).length>=capacity||!computeDocumentLayout(combined,'column'))){pages.push({items:current,placements:computeDocumentLayout(current,'column')});current=[]}
+        current.push(...group.items);
+    }
+    if(current.length)pages.push({items:current,placements:computeDocumentLayout(current,'column')});return pages;
+}
+let columnRequestPage=null;
+function columnDocuments(target){
+    const keys=new Set(target.items.map(documentKey));return documentGroups(state.pages.flatMap(p=>p.items).filter(item=>keys.has(documentKey(item))));
+}
+function requestColumnArrangement(){
+    const target=page(),groups=columnDocuments(target);if(!groups.length)return;
+    if(groups.length===1){applyColumnArrangement(1,target.id);return}
+    columnRequestPage=target.id;$('columnLayoutSummary').textContent='يوجد '+groups.length+' مستمسك في الصفحة الحالية. يُحسب الوجه والظهر مستمسكًا واحدًا. اختر طريقة توزيعها:';
+    if(!$('columnLayoutDialog').open)$('columnLayoutDialog').showModal();
+}
+function applyColumnArrangement(capacity,targetId=columnRequestPage||state.active){
+    const target=state.pages.find(p=>p.id===targetId);if(!target||!target.items.length)return;
+    const groups=columnDocuments(target),plans=paginateColumnDocuments(groups,capacity);
+    if(!plans){toast('لا يتسع أحد المستمسكات عموديًا بقياسه الحالي؛ لم يتغير العمل');return}
+    checkpoint();const movingIds=new Set(groups.flatMap(group=>group.items.map(item=>item.id)));
+    for(const p of state.pages){if(p===target)continue;p.items=p.items.filter(item=>!movingIds.has(item.id))}
+    const added=plans.slice(1).map(plan=>({id:uid(),layout:'column',documentsPerPage:capacity,items:plan.items}));
+    target.items=plans[0].items;target.layout='column';target.documentsPerPage=capacity;
+    const pages=[];for(const p of state.pages){pages.push(p);if(p===target)pages.push(...added)}state.pages=pages;
+    for(const plan of plans)for(const placement of plan.placements){placement.i.x=placement.x;placement.i.y=placement.y}
+    selected=null;state.active=target.id;columnRequestPage=null;if($('columnLayoutDialog').open)$('columnLayoutDialog').close();changed();goActive();
+    toast('تم توسيط '+groups.length+' مستمسك في '+plans.length+' صفحة');
 }
 // Four-point perspective rectification: solve inverse projective mapping.
 function solve(A,b){const n=b.length;A=A.map((r,i)=>[...r,b[i]]);for(let c=0;c<n;c++){let pivot=c;for(let r=c+1;r<n;r++)if(Math.abs(A[r][c])>Math.abs(A[pivot][c]))pivot=r;[A[c],A[pivot]]=[A[pivot],A[c]];if(Math.abs(A[c][c])<1e-10)throw Error('الزوايا متقاربة جدًا');const d=A[c][c];for(let j=c;j<=n;j++)A[c][j]/=d;for(let r=0;r<n;r++)if(r!==c){const k=A[r][c];for(let j=c;j<=n;j++)A[r][j]-=k*A[c][j]}}return A.map(r=>r[n])}
@@ -746,12 +1012,31 @@ async function pageCanvas(p){const canvas=document.createElement('canvas');canva
 // Small, dependency-free PDF writer; document images are embedded as JPEG streams.
 function buildPDF(images){const enc=new TextEncoder(),chunks=[],offsets=[0];let size=0;const put=b=>{if(typeof b==='string')b=enc.encode(b);chunks.push(b);size+=b.length};const obj=(n,body)=>{offsets[n]=size;put(n+' 0 obj\n');body();put('\nendobj\n')};put('%PDF-1.4\n');obj(1,()=>put('<< /Type /Catalog /Pages 2 0 R >>'));obj(2,()=>put('<< /Type /Pages /Count '+images.length+' /Kids ['+images.map((_,i)=>(3+i*3)+' 0 R').join(' ')+'] >>'));images.forEach((im,i)=>{const n=3+i*3;obj(n,()=>put(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.276 841.89] /Resources << /XObject << /Im ${n+2} 0 R >> >> /Contents ${n+1} 0 R >>`));const command='q 595.276 0 0 841.89 0 0 cm /Im Do Q';obj(n+1,()=>put('<< /Length '+enc.encode(command).length+' >>\nstream\n'+command+'\nendstream'));obj(n+2,()=>{put(`<< /Type /XObject /Subtype /Image /Width ${W*2} /Height ${H*2} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${im.length} >>\nstream\n`);put(im);put('\nendstream')})});const start=size;put('xref\n0 '+offsets.length+'\n0000000000 65535 f \n');for(let i=1;i<offsets.length;i++)put(String(offsets[i]).padStart(10,'0')+' 00000 n \n');put('trailer\n<< /Size '+offsets.length+' /Root 1 0 R >>\nstartxref\n'+start+'\n%%EOF');return new Blob(chunks,{type:'application/pdf'})}
 let preparedExports=[],shareExportToken=0;
+function exportDateStamp(date=new Date()){
+    const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Baghdad',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(date),part=type=>parts.find(value=>value.type===type).value;
+    return part('year')+'-'+part('month')+'-'+part('day');
+}
+function exportBaseName(value,date=new Date()){
+    let name=String(value??'').trim().replace(/\.(pdf|png|jpe?g|webp)$/i,'').replace(/[<>:"/\\|?*\x00-\x1f\x7f]/g,'-').replace(/[.\s]+$/g,'').trim();
+    name=Array.from(name).slice(0,120).join('').replace(/[.\s]+$/g,'');
+    if(!name)return 'مستمسكات-'+exportDateStamp(date);
+    if(/^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(name))name='مستمسكات-'+name;
+    return name;
+}
+function renamePreparedExports(){
+    if(!preparedExports.length)return;const base=exportBaseName($('exportFilename').value);$('shareFiles').replaceChildren();
+    preparedExports.forEach((file,index)=>{
+        const extension=file.blob.type==='application/pdf'?'pdf':file.blob.type==='image/jpeg'?'jpg':file.blob.type==='image/webp'?'webp':'png';
+        file.name=base+(extension==='pdf'?'':'-'+String(index+1).padStart(2,'0'))+'.'+extension;
+        const link=document.createElement('a');link.href=file.url;link.download=file.name;link.textContent='تنزيل '+file.name;$('shareFiles').append(link);
+    });
+}
 function clearPreparedExports(){for(const file of preparedExports)if(file.url)URL.revokeObjectURL(file.url);preparedExports=[];$('shareFiles').replaceChildren();$('shareSend').disabled=true}
-function openShareOptions(){shareExportToken++;clearPreparedExports();$('shareStatus').textContent='اختر الصيغة المطلوبة لتجهيز جميع الصفحات.';document.querySelectorAll('#shareDialog [data-format]').forEach(button=>{button.disabled=false;button.setAttribute('aria-pressed','false')});$('shareSend').textContent='تجهيز الملفات أولًا';if(!$('shareDialog').open)$('shareDialog').showModal()}
+function openShareOptions(){shareExportToken++;clearPreparedExports();const name=exportBaseName('');$('exportFilename').value=name;$('exportFilename').placeholder=name;$('shareStatus').textContent='عدّل اسم الملف إذا رغبت، ثم اختر الصيغة لتجهيز جميع الصفحات.';document.querySelectorAll('#shareDialog [data-format]').forEach(button=>{button.disabled=false;button.setAttribute('aria-pressed','false')});$('shareSend').textContent='تجهيز الملفات أولًا';if(!$('shareDialog').open)$('shareDialog').showModal()}
 function canvasBlob(canvas,type,quality){return new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(Error('تعذر إنشاء الصورة')),type,quality))}
-async function buildExportFiles(format,snapshot,onProgress=()=>{},isCurrent=()=>true){
+async function buildExportFiles(format,snapshot,onProgress=()=>{},isCurrent=()=>true,filename=''){
     if(!['pdf','png','jpeg','webp'].includes(format))throw Error('صيغة غير مدعومة');
-    const files=[],images=[];
+    const base=exportBaseName(filename),files=[],images=[];
     for(let index=0;index<snapshot.pages.length;index++){
         if(!isCurrent())return null;onProgress(index+1,snapshot.pages.length);
         const canvas=await pageCanvas(snapshot.pages[index]);
@@ -761,13 +1046,13 @@ async function buildExportFiles(format,snapshot,onProgress=()=>{},isCurrent=()=>
             else{
                 const blob=await canvasBlob(canvas,'image/'+format,format==='jpeg'?.94:.92),extension=blob.type==='image/png'?'png':blob.type==='image/webp'?'webp':blob.type==='image/jpeg'?'jpg':null;
                 if(!extension)throw Error('المتصفح لا يدعم إنشاء هذه الصيغة');
-                files.push({blob,name:'مستمسكات-'+String(index+1).padStart(2,'0')+'.'+extension});
+                files.push({blob,name:base+'-'+String(index+1).padStart(2,'0')+'.'+extension});
             }
         }finally{canvas.width=canvas.height=1}
         await new Promise(resolve=>setTimeout(resolve,0));
     }
     if(!isCurrent())return null;
-    return format==='pdf'?[{blob:buildPDF(images),name:'مستمسكات.pdf'}]:files;
+    return format==='pdf'?[{blob:buildPDF(images),name:base+'.pdf'}]:files;
 }
 function nativeShareFiles(files){
     if(typeof File==='undefined'||!navigator.share||!navigator.canShare)return null;
@@ -777,10 +1062,10 @@ async function exportFormat(format){
     const token=++shareExportToken;clearPreparedExports();$('shareSend').textContent='جارٍ تجهيز الملفات…';
     document.querySelectorAll('#shareDialog [data-format]').forEach(button=>{button.disabled=true;button.setAttribute('aria-pressed',String(button.dataset.format===format))});
     try{
-        const snapshot=structuredClone(state),files=await buildExportFiles(format,snapshot,(index,total)=>{$('shareStatus').textContent='تجهيز الصفحة '+index+' من '+total+'…'},()=>token===shareExportToken&&$('shareDialog').open);
+        const snapshot=structuredClone(state),files=await buildExportFiles(format,snapshot,(index,total)=>{$('shareStatus').textContent='تجهيز الصفحة '+index+' من '+total+'…'},()=>token===shareExportToken&&$('shareDialog').open,$('exportFilename').value);
         if(!files||token!==shareExportToken)return;
         preparedExports=files.map(file=>({...file,url:URL.createObjectURL(file.blob)}));
-        for(const file of preparedExports){const link=document.createElement('a');link.href=file.url;link.download=file.name;link.textContent='تنزيل '+file.name;$('shareFiles').append(link)}
+        renamePreparedExports();
         const canShare=!!nativeShareFiles(preparedExports);
         $('shareSend').textContent=canShare?'مشاركة الملفات':'تنزيل الملفات';$('shareSend').disabled=false;
         const actualTypes=[...new Set(files.map(file=>file.name.split('.').pop().toUpperCase()))].join(' / ');
@@ -803,6 +1088,7 @@ function initShareOptions(){
     $('share').onclick=openShareOptions;
     document.querySelectorAll('#shareDialog [data-format]').forEach(button=>button.onclick=()=>exportFormat(button.dataset.format));
     $('shareSend').onclick=sharePreparedExport;
+    $('exportFilename').addEventListener('input',renamePreparedExports);
     $('shareDialog').addEventListener('close',()=>{shareExportToken++;clearPreparedExports()});
 }
 async function exportPDF(){const files=await buildExportFiles('pdf',structuredClone(state));if(files)download(files[0].blob,files[0].name)}
@@ -826,6 +1112,64 @@ function initInteractionGuards(){
         const selection=globalThis.getSelection?.();if(selection&&!selection.isCollapsed)selection.removeAllRanges();
     });
 }
+let actionConfirmation=null;
+function finishActionConfirmation(accepted){
+    const resolve=actionConfirmation;if(!resolve)return;actionConfirmation=null;
+    if($('actionDialog').open)$('actionDialog').close();resolve(accepted);
+}
+function askActionConfirmation({title,message,accept='تأكيد',danger=true}){
+    finishActionConfirmation(false);$('actionTitle').textContent=title;$('actionMessage').textContent=message;
+    $('actionAccept').textContent=accept;$('actionAccept').className=danger?'danger':'primary';
+    return new Promise(resolve=>{actionConfirmation=resolve;$('actionDialog').showModal();$('actionCancel').focus()});
+}
+function initActionConfirmation(){
+    $('actionAccept').onclick=()=>finishActionConfirmation(true);
+    $('actionDialog').addEventListener('close',()=>finishActionConfirmation(false));
+    $('actionDialog').addEventListener('cancel',event=>{event.preventDefault();finishActionConfirmation(false)});
+}
+async function requestDeletePage(){
+    const target=page(),epoch=workspaceEpoch;if(!target)return;
+    const accepted=await askActionConfirmation({title:'حذف الصفحة؟',message:'سيتم حذف الصفحة النشطة وجميع المستمسكات الموجودة فيها. هل تريد المتابعة؟',accept:'نعم، حذف الصفحة'});
+    if(!accepted||epoch!==workspaceEpoch)return;
+    const index=state.pages.findIndex(p=>p.id===target.id);if(index<0)return;
+    checkpoint();state.pages.splice(index,1);if(!state.pages.length)newPage();state.active=state.pages[Math.min(index,state.pages.length-1)].id;selected=null;changed();goActive();
+}
+async function requestImportProject(file){
+    if(!file)return;const epoch=workspaceEpoch;
+    try{
+        if(file.size>100*1024*1024)throw Error('حجم الملف كبير جدًا');
+        const incoming=validate(JSON.parse(await file.text()));if(epoch!==workspaceEpoch)return;
+        const accepted=await askActionConfirmation({title:'فتح نسخة محفوظة؟',message:'فتح هذه النسخة سيستبدل صفحات العمل الحالية بالمستمسكات الموجودة في الملف. هل تريد المتابعة؟',accept:'نعم، فتح النسخة'});
+        if(!accepted||epoch!==workspaceEpoch)return;
+        checkpoint();workspaceEpoch++;imageLoadToken++;cancelEdgeDetection();endCropDrag();crop=null;shareExportToken++;clearPreparedExports();columnRequestPage=null;
+        state=incoming;selected=null;changed();goActive();
+    }catch(error){toast('تعذر فتح النسخة: '+error.message)}
+}
+function requestClearAll(){
+    const dialog=$('clearAllDialog');if(dialog.open&&$('confirmClearAll').disabled)return;
+    $('clearAllStatus').textContent='';$('confirmClearAll').disabled=false;$('confirmClearAll').textContent='نعم، تفريغ كل الصفحات';$('cancelClearAll').disabled=false;$('cancelClearAll').textContent='إلغاء';
+    if(!dialog.open)dialog.showModal();$('cancelClearAll').focus();
+}
+async function confirmClearAll(){
+    const dialog=$('clearAllDialog'),button=$('confirmClearAll');if(!dialog.open||button.disabled)return;
+    button.disabled=true;button.textContent='جارٍ التفريغ…';$('cancelClearAll').disabled=true;
+    try{
+        clearTimeout(saveTimer);saveTimer=undefined;workspaceEpoch++;imageLoadToken++;columnRequestPage=null;
+        cancelEdgeDetection();endCropDrag();crop=null;shareExportToken++;clearPreparedExports();
+        for(const opened of document.querySelectorAll('dialog[open]'))if(opened!==dialog)opened.close();
+        const first={id:uid(),items:[],layout:'rows'};state={version:2,pages:[first],active:first.id};selected=null;history=[];scale=1;autoFit=true;
+        $('file').value='';$('cropFile').value='';$('projectFile').value='';$('exportFilename').value='';$('arrange').value='';$('workspace').scrollLeft=0;
+        render();window.scrollTo({top:0,behavior:'auto'});
+        const saved=await persist();
+        if(saved){dialog.close();toast('تم تفريغ كل الصفحات والبدء بصفحة فارغة')}
+        else{$('clearAllStatus').textContent='تم تفريغ مساحة العمل، لكن تعذر تحديث الحفظ المحلي. يمكنك إعادة المحاولة.';button.textContent='إعادة محاولة الحفظ';$('cancelClearAll').textContent='إغلاق'}
+    }catch(error){$('clearAllStatus').textContent='تعذر إكمال التفريغ والحفظ؛ يمكنك إعادة المحاولة.';button.textContent='إعادة المحاولة';$('cancelClearAll').textContent='إغلاق'}
+    finally{button.disabled=false;$('cancelClearAll').disabled=false}
+}
+function initClearAll(){
+    $('clearAll').onclick=requestClearAll;$('confirmClearAll').onclick=confirmClearAll;
+    $('clearAllDialog').addEventListener('cancel',event=>{if($('confirmClearAll').disabled)event.preventDefault()});
+}
 function initToolbar(){
     const icons={
         add:'<path d="M12 4v16M4 12h16"/>',
@@ -837,6 +1181,7 @@ function initToolbar(){
         open:'<path d="M3 8V5h6l2 3h10l-3 12H3zM3 8v12"/>',
         pdf:'<path d="M14 3H5v18h14V8l-5-5v5h5M12 11v7m-3-3 3 3 3-3"/>',
         print:'<path d="M7 8V3h10v5M7 17H3V9h18v8h-4M7 14h10v7H7zM17 11h.01"/>',
+        clear:'<path d="m14 3 6 6-9 9-6-6 9-9ZM3 14l7 7M3 18l3 3M16 6l5-5M14 21h7"/>',
         delete:ITEM_ICONS.delete,
         deletePage:'<path d="M14 3H5v18h14V8l-5-5v5h5m-10 4 6 6m0-6-6 6"/>'
     };
@@ -851,10 +1196,11 @@ function initToolbar(){
     document.addEventListener('keydown',event=>{if(event.key==='Escape'&&mobile.matches&&more.open){more.open=false;summary.focus()}});
 }
 // UI actions: handlers are bound once; rendering never installs global drag listeners.
-TYPES.forEach(t=>{const b=document.createElement('button');b.textContent=t[1];const s=document.createElement('small');s.textContent=t[0]==='five'?'خمسة أزواج مصغرة في ورقة واحدة':`${t[2]} × ${t[3]} مم • ${isDoubleSided(t[0])?'وجهان':'وجه واحد'}`;b.append(s);b.onclick=()=>addTemplate(t);$('templates').append(b)});
+TYPES.forEach(t=>{const b=document.createElement('button');b.textContent=t[1];const s=document.createElement('small');s.textContent=t[0]==='five'?'خمسة أزواج بحجم 85 × 55 مم تقريبًا • فواصل نحو 2.5 مم':`${t[2]} × ${t[3]} مم • ${isDoubleSided(t[0])?'وجهان':'وجه واحد'}`;b.append(s);b.onclick=()=>addTemplate(t);$('templates').append(b)});
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>$(b.dataset.close).close());
+document.querySelectorAll('[data-column-count]').forEach(button=>button.onclick=()=>applyColumnArrangement(Number(button.dataset.columnCount)));
 document.addEventListener('pointerdown',clearSelectionOutside);
-$('addDocument').onclick=()=>$('templatesDialog').showModal();$('addPage').onclick=()=>{checkpoint();newPage();selected=null;changed();goActive()};$('deletePage').onclick=()=>{if(!confirm('حذف الصفحة النشطة وكل مستمسكاتها؟'))return;checkpoint();const idx=state.pages.indexOf(page());state.pages.splice(idx,1);if(!state.pages.length)newPage();state.active=state.pages[Math.max(0,idx-1)].id;selected=null;changed();goActive()};$('fit').onclick=()=>{autoFit=true;render()};function zoom(delta){autoFit=false;scale=Math.max(.2,Math.min(2,scale+delta));render()}$('zoomIn').onclick=()=>zoom(.1);$('zoomOut').onclick=()=>zoom(-.1);$('arrange').onchange=e=>{arrange(e.target.value);e.target.value=''};$('editSelected').onclick=()=>openImagePicker(selected);$('deleteSelected').onclick=()=>deleteItem(selected);
+$('addDocument').onclick=()=>$('templatesDialog').showModal();$('addPage').onclick=()=>insertWorkspacePage(state.pages.length);$('deletePage').onclick=requestDeletePage;$('fit').onclick=()=>{autoFit=true;render()};function zoom(delta){autoFit=false;scale=Math.max(.2,Math.min(2,scale+delta));render()}$('zoomIn').onclick=()=>zoom(.1);$('zoomOut').onclick=()=>zoom(-.1);$('arrange').onchange=e=>{arrange(e.target.value);e.target.value=''};
 let imagePickerTarget=null,imageLoadToken=0;
 function openImagePicker(id,fromCrop=false){if(!findItem(id))return;imagePickerTarget=id;const input=$(fromCrop?'cropFile':'file');input.value='';input.click()}
 async function handleImageSelection(e){
@@ -883,8 +1229,8 @@ $('rotateCrop').onclick=()=>{if(!crop)return;cancelEdgeDetection();endCropDrag()
 for(const id of ['imageFilter','imageBrightness','imageContrast'])$(id).addEventListener('input',()=>{if(!crop)return;crop.filter=$('imageFilter').value;crop.brightness=Number($('imageBrightness').value);crop.contrast=Number($('imageContrast').value);refreshCropPreview()});
 $('resetFilters').onclick=()=>{if(!crop)return;crop.filter='color';crop.brightness=0;crop.contrast=100;refreshCropPreview()};
 initToolbar();
-initShareOptions();initFixedViewport();initInteractionGuards();
-$('saveProject').onclick=()=>download(new Blob([JSON.stringify(state)],{type:'application/json'}),'مستمسكات-نسخة.json');$('loadProject').onclick=()=>$('projectFile').click();$('projectFile').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;try{if(f.size>100*1024*1024)throw Error('حجم الملف كبير جدًا');const incoming=validate(JSON.parse(await f.text()));if(!confirm('فتح النسخة سيستبدل العمل الحالي. هل تريد المتابعة؟'))return;checkpoint();state=incoming;selected=null;changed();goActive()}catch(e){toast('تعذر فتح النسخة: '+e.message)}};$('print').onclick=async()=>{await Promise.all([...document.querySelectorAll('.item img')].map(i=>i.decode().catch(()=>{})));window.print()};window.addEventListener('resize',()=>{render();if(crop&&$('cropDialog').open)drawCrop()});document.addEventListener('visibilitychange',()=>{if(document.hidden){clearTimeout(saveTimer);persist()}});render();restore();
+initShareOptions();initFixedViewport();initInteractionGuards();initClearAll();initActionConfirmation();
+$('saveProject').onclick=()=>download(new Blob([JSON.stringify(state)],{type:'application/json'}),'مستمسكات-نسخة.json');$('loadProject').onclick=()=>$('projectFile').click();$('projectFile').onchange=e=>{const file=e.target.files[0];e.target.value='';void requestImportProject(file)};$('print').onclick=async()=>{await Promise.all([...document.querySelectorAll('.item img')].map(i=>i.decode().catch(()=>{})));window.print()};window.addEventListener('resize',()=>{render();if(crop&&$('cropDialog').open)drawCrop()});document.addEventListener('visibilitychange',()=>{if(document.hidden){clearTimeout(saveTimer);persist()}});render();restore();
 </script>
 </html>
 
