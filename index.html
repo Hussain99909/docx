@@ -6,6 +6,9 @@
 <style>
 /* Keep the app viewport fixed; zoom the A4 sheet using its own controls. */
 *{touch-action:pan-x pan-y}
+body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+input,textarea,[contenteditable="true"],[contenteditable=""]{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
+.item img{-webkit-user-drag:none;user-select:none;-webkit-user-select:none}
 :root{font-family:Tahoma,Arial,sans-serif;color:#203047;background:#edf1f6;font-size:15px}*{box-sizing:border-box}body{margin:0}button,input,select{font:inherit}button,select{cursor:pointer}button{border:1px solid #d8e0eb;border-radius:10px;background:white;color:inherit;min-height:44px;padding:9px 13px}button:hover{background:#eef2ff}button:focus-visible,select:focus-visible{outline:3px solid #818cf8;outline-offset:2px}button:disabled{opacity:.45;cursor:default}.primary{background:#5146d8;color:white;border-color:#5146d8}.danger{color:#b42336}header{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid #d8e0eb;padding:12px max(16px,env(safe-area-inset-right));display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}h1{font-size:18px;margin:0}small{color:#64748b;font-size:12px}.actions,.tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.tools{padding:10px 16px;background:#f8fafc;border-bottom:1px solid #d8e0eb}.tools select{min-height:44px;max-width:150px;background:white;border:1px solid #d8e0eb;border-radius:8px;padding:6px}.tools label{font-size:13px}main{overflow:auto;direction:ltr;padding:24px 16px 110px;min-height:70vh;overscroll-behavior-x:contain}#pages{width:max-content;min-width:100%;display:flex;flex-direction:column;align-items:center;gap:24px;direction:rtl}.sheet-slot{position:relative;flex:none}.page{position:absolute;left:0;top:0;width:794px;height:1123px;transform-origin:top left;background:white;box-shadow:0 5px 22px #20304720;outline:1px solid #cbd5e1;overflow:hidden;direction:ltr}.page.active{outline:3px solid #7064e7}.page:before{content:'';position:absolute;inset:0;background-image:linear-gradient(#edf1f5 1px,transparent 1px),linear-gradient(90deg,#edf1f5 1px,transparent 1px);background-size:20px 20px;pointer-events:none}.item{position:absolute;border:2px dashed #94a3b8;background:#f8fafc;display:flex;align-items:center;justify-content:center;flex-direction:column;direction:rtl;overflow:hidden}.item.selected{outline:4px solid #8b7cf6;outline-offset:-4px}.item img{width:100%;height:100%;object-fit:fill;pointer-events:none}.item.filled{border:0;background:white}.item .caption{font-size:17px;text-align:center;padding:8px}.item .controls{position:absolute;top:6px;left:6px;right:6px;display:flex;gap:6px;justify-content:space-between;z-index:2}.item .controls button{font-size:var(--control-font,16px);min-width:var(--control-size,44px);height:var(--control-size,44px);padding:6px;background:#fffffff2;box-shadow:0 2px 6px #0002}.move{touch-action:none;cursor:grab}.page-label{position:absolute;top:8px;right:12px;color:#94a3b8;font-size:13px;pointer-events:none}.dock{flex-wrap:wrap;position:fixed;bottom:0;inset-inline:0;z-index:20;background:#fffffff5;border-top:1px solid #d8e0eb;display:flex;justify-content:center;gap:10px;padding:10px 14px max(10px,env(safe-area-inset-bottom));box-shadow:0 -5px 20px #20304708}dialog{border:0;border-radius:18px;width:min(540px,94vw);max-height:88dvh;padding:20px;color:#203047}dialog::backdrop{background:#16233899}dialog h2{margin:0;font-size:19px}.dialog-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:8px}.templates{display:grid;gap:9px}.templates button{text-align:right;display:flex;flex-direction:column;gap:5px;padding:13px}.note{line-height:1.8;font-size:13px;color:#64748b}.crop-stage{position:relative;width:100%;height:min(52dvh,440px);background:#172234;overflow:hidden;touch-action:none}.crop-stage canvas{width:100%;height:100%;display:block}#cropDialog{width:min(760px,96vw)}#cropDialog .actions{margin-top:12px}.toast{position:fixed;bottom:88px;left:50%;transform:translateX(-50%);background:#203047;color:white;padding:12px 18px;border-radius:12px;z-index:100;max-width:90vw;display:none;direction:rtl}.status{display:block;margin-top:5px}#zoomValue{min-width:45px;text-align:center;font-size:13px}#file,#projectFile{display:none}@media(max-width:600px){header{padding:10px 12px;gap:10px}header .actions{gap:5px}header .actions button{padding:7px 9px;font-size:12px}h1{font-size:16px}.tools{padding:8px;gap:6px}.tools button{padding:7px 10px}.tools label{display:none}main{padding:18px 10px 110px}.dock button{font-size:13px;padding:9px 12px}.note{font-size:12px}}@media print{@page{size:A4 portrait;margin:0}html,body{background:white;margin:0!important}header,.tools,.dock,dialog,.toast{display:none!important}main{padding:0!important;overflow:visible!important;min-height:0}#pages{display:block;width:auto;min-width:0}.sheet-slot{width:210mm!important;height:297mm!important;break-after:page;page-break-after:always}.sheet-slot:last-child{break-after:auto;page-break-after:auto}.page{width:794px;height:1123px;transform:scale(.9996)!important;outline:0!important;box-shadow:none;position:relative;width:794px;height:1123px}.page:before,.page-label,.controls,.caption{display:none!important}.item{outline:none!important;border:0;background:white}.item:not(.filled){display:none!important}}
 .alignment-guides{position:absolute;inset:0;z-index:8;pointer-events:none;overflow:hidden}
 .alignment-guide{position:absolute;background:#2563eb;box-shadow:0 0 0 calc(var(--guide-size,2px)/3) #ffffffa6}
@@ -39,6 +42,8 @@
 #cropLoupe{position:absolute;display:none;z-index:4;border:3px solid white;border-radius:50%;box-shadow:0 3px 20px #0007;pointer-events:none;background:#e5e7eb}
 .crop-status{font-size:12px;line-height:1.6;color:#64748b;margin:8px 0 0;min-height:20px}
 #autoCrop{color:#5146d8;border-color:#b9b3f1}
+.crop-mode-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}.crop-mode-bar button{min-width:120px}
+#cropDialog[data-mode="preview"] #autoCrop,#cropDialog[data-mode="preview"] #resetCrop,#cropDialog[data-mode="preview"] #rotateCrop{display:none}
 .app-header{position:sticky;top:0;z-index:20;display:flex;flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:6px;width:100%;min-width:0;max-width:100%;padding:8px max(12px,env(safe-area-inset-right));background:#fff;box-shadow:0 2px 10px #2030470a}
 .toolbar-brand{flex:1 1 auto;min-width:0;white-space:nowrap}.toolbar-brand h1{font-size:16px}
 .toolbar-status{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
@@ -106,7 +111,7 @@ main{padding-bottom:32px}.toast{bottom:max(20px,env(safe-area-inset-bottom))}
 <main id="workspace" aria-label="مساحة العمل"><div id="pages"></div><div class="page-end-actions"><button id="addPage"><svg class="toolbar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 3H5v18h14V8l-5-5v5h5M8 14h8M12 10v8"/></svg>إضافة صفحة</button></div></main>
 <dialog id="shareDialog"><div class="dialog-head"><h2>مشاركة المستمسكات</h2><button data-close="shareDialog" aria-label="إغلاق">✕</button></div><p class="note">اختر الصيغة لتجهيز جميع الصفحات، ثم شارك الملفات أو نزّلها. تُصدّر الصور وحدها على خلفية بيضاء.</p><div class="share-formats"><button data-format="pdf" aria-pressed="false"><strong>PDF</strong><small>كل الصفحات في ملف واحد</small></button><button data-format="png" aria-pressed="false"><strong>PNG</strong><small>صور دون فقدان إضافي للجودة</small></button><button data-format="jpeg" aria-pressed="false"><strong>JPG</strong><small>صور بحجم أصغر</small></button><button data-format="webp" aria-pressed="false"><strong>WebP</strong><small>ضغط جيد للمتصفحات الحديثة</small></button></div><p id="shareStatus" class="note" role="status">اختر الصيغة المطلوبة.</p><button id="shareSend" class="primary" disabled>تجهيز الملفات أولًا</button><div id="shareFiles" aria-label="تنزيل الملفات بشكل منفصل"></div></dialog>
 <dialog id="templatesDialog"><div class="dialog-head"><h2>اختر نوع المستمسك</h2><button data-close="templatesDialog" aria-label="إغلاق">✕</button></div><div class="templates" id="templates"></div><p class="note">الأبعاد أبعاد قوالب قابلة للاستخدام، ويجب التحقق من مطابقتها للمستمسك الأصلي. حرّك المستمسك من مقبض ↔، ومرّر من أي مكان آخر.</p></dialog>
-<dialog id="cropDialog"><div class="dialog-head"><h2>قص الصورة والفلاتر</h2><button data-close="cropDialog" aria-label="إلغاء التعديل">✕</button></div><p class="note">حرّك الدوائر إلى زوايا الوثيقة واضبط الفلتر. لن تتغير الصورة الموجودة في الورقة حتى تضغط «اعتماد الصورة».</p><div class="crop-stage" id="cropStage"><canvas id="cropCanvas"></canvas><canvas id="cropLoupe" aria-hidden="true"></canvas></div><p id="edgeStatus" class="crop-status" role="status">يمكن اكتشاف حواف المستمسك تلقائيًا أو ضبط الزوايا يدويًا.</p><div class="filter-tools"><label for="imageFilter">الفلتر<select id="imageFilter"><option value="color">ألوان أصلية</option><option value="auto">تحسين تلقائي</option><option value="clean">مسح ملون وتقليل الظلال</option><option value="gray">تدرج رمادي</option><option value="bw">أبيض وأسود ثابت</option><option value="text">نص واضح (إضاءة متفاوتة)</option><option value="sharp">وضوح التفاصيل</option><option value="soft">تقليل التشويش</option></select></label><label for="imageBrightness">الإضاءة <output id="brightnessValue">0</output><input id="imageBrightness" type="range" min="-50" max="50" value="0"></label><label for="imageContrast">التباين <output id="contrastValue">100%</output><input id="imageContrast" type="range" min="50" max="200" value="100"></label></div><p id="filterHint" class="note" aria-live="polite"></p><div class="actions"><button id="applyCrop" class="primary">اعتماد الصورة</button><button id="chooseAnotherImage">اختيار صورة أخرى</button><button id="autoCrop">اكتشاف الحواف</button><button id="resetCrop">كامل الصورة</button><button id="resetFilters">إعادة الفلاتر</button><button id="rotateCrop">تدوير 90°</button></div><input type="file" id="cropFile" accept="image/*" hidden></dialog>
+<dialog id="cropDialog"><div class="dialog-head"><h2>قص الصورة والفلاتر</h2><button data-close="cropDialog" aria-label="إلغاء التعديل">✕</button></div><p id="cropHelp" class="note">حدّد زوايا الوثيقة ثم اضغط «إنهاء القص» لمعاينتها مكبّرة دون المنطقة المظللة.</p><div class="crop-mode-bar"><button id="cropMode" class="primary">إنهاء القص</button><span class="note">لن تتغير صورة الورقة حتى تضغط «اعتماد الصورة».</span></div><div class="crop-stage" id="cropStage"><canvas id="cropCanvas"></canvas><canvas id="cropLoupe" aria-hidden="true"></canvas></div><p id="edgeStatus" class="crop-status" role="status">يمكن اكتشاف حواف المستمسك تلقائيًا أو ضبط الزوايا يدويًا.</p><div class="filter-tools"><label for="imageFilter">الفلتر<select id="imageFilter"><option value="color">ألوان أصلية</option><option value="auto">تحسين تلقائي</option><option value="clean">مسح ملون وتقليل الظلال</option><option value="gray">تدرج رمادي</option><option value="bw">أبيض وأسود ثابت</option><option value="text">نص واضح (إضاءة متفاوتة)</option><option value="sharp">وضوح التفاصيل</option><option value="soft">تقليل التشويش</option></select></label><label for="imageBrightness">الإضاءة <output id="brightnessValue">0</output><input id="imageBrightness" type="range" min="-50" max="50" value="0"></label><label for="imageContrast">التباين <output id="contrastValue">100%</output><input id="imageContrast" type="range" min="50" max="200" value="100"></label></div><p id="filterHint" class="note" aria-live="polite"></p><div class="actions"><button id="applyCrop" class="primary">اعتماد الصورة</button><button id="chooseAnotherImage">اختيار صورة أخرى</button><button id="autoCrop">اكتشاف الحواف</button><button id="resetCrop">كامل الصورة</button><button id="resetFilters">إعادة الفلاتر</button><button id="rotateCrop">تدوير 90°</button></div><input type="file" id="cropFile" accept="image/*" hidden></dialog>
 <input type="file" id="file" accept="image/*"><input type="file" id="projectFile" accept=".json,application/json"><div class="toast" id="toast" role="status"></div>
 <script>
 'use strict';
@@ -201,7 +206,7 @@ function renderItem(i,p){
     el.tabIndex=0;el.setAttribute('role','group');el.setAttribute('aria-label',i.label);el.addEventListener('focus',()=>{activate(p.id);selectItem(i.id)});
     Object.assign(el.style,{left:i.x+'px',top:i.y+'px',width:i.w+'px',height:i.h+'px'});
     const metrics=itemControlMetrics(i,scale);el.style.setProperty('--item-control-size',metrics.size+'px');el.style.setProperty('--item-control-inset',metrics.inset+'px');
-    if(i.image){const img=new Image();img.src=i.image;img.alt=i.label;el.append(img)}
+    if(i.image){const img=new Image();img.src=i.image;img.alt=i.label;img.draggable=false;el.append(img)}
     else{const text=document.createElement('span');text.className='caption';text.textContent=i.label;el.append(text);const add=document.createElement('button');add.textContent='＋ إضافة صورة';add.onclick=e=>{e.stopPropagation();activate(p.id);selectItem(i.id);openImagePicker(i.id)};el.append(add)}
     const controls=document.createElement('div');controls.className='controls';
     const move=itemAction('move','اسحب لتحريك '+i.label);bindDrag(move,el,i,p);controls.append(move);
@@ -365,7 +370,37 @@ function addTemplate(t){
     }
     $('templatesDialog').close();changed();goActive();
 }
-function arrange(mode){if(!mode)return;const items=page().items;if(!items.length)return;let x=40,y=40,rowH=0;const placements=[];for(const i of items){if(i.w===W&&items.length===1){placements.push({i,x:0,y:0});continue}if(mode==='column'){x=(W-i.w)/2}else if(x+i.w>W-40){x=40;y+=rowH+24;rowH=0}if(y+i.h>H-40||i.w>W-80){toast('المساحة لا تكفي لهذا الترتيب؛ أضف صفحة أو قلّل عدد المستمسكات');return}placements.push({i,x,y});if(mode==='column')y+=i.h+24;else{x+=i.w+24;rowH=Math.max(rowH,i.h)}}checkpoint();placements.forEach(o=>{o.i.x=o.x;o.i.y=o.y});changed()}
+function computeDocumentLayout(items,mode){
+    if(!['rows','column'].includes(mode))return null;
+    if(!items.length)return [];
+    if(items.some(i=>!Number.isFinite(i.w)||!Number.isFinite(i.h)||i.w<=0||i.h<=0||i.w>W||i.h>H))return null;
+    if(items.length===1&&items[0].w===W&&items[0].h===H)return[{i:items[0],x:0,y:0}];
+    const margin=40,gap=28,available=W-margin*2,rows=[];
+    let row={items:[],width:0,height:0};
+    for(const item of items){
+        const width=row.width+(row.items.length?gap:0)+item.w;
+        if(row.items.length&&(mode==='column'||width>available)){
+            rows.push(row);row={items:[],width:0,height:0};
+        }
+        row.width+=(row.items.length?gap:0)+item.w;row.height=Math.max(row.height,item.h);row.items.push(item);
+    }
+    if(row.items.length)rows.push(row);
+    const placements=[];let y=margin;
+    for(const current of rows){
+        if(current.width>W||y+current.height>H-margin)return null;
+        // Center each complete row, including the last partial row, in A4 coordinates.
+        let x=(W-current.width)/2;
+        for(const item of current.items){placements.push({i:item,x,y});x+=item.w+gap}
+        y+=current.height+gap;
+    }
+    return placements;
+}
+function arrange(mode){
+    if(!mode||!page().items.length)return;
+    const placements=computeDocumentLayout(page().items,mode);
+    if(!placements){toast('المساحة لا تكفي لهذا الترتيب؛ أضف صفحة أو قلّل عدد المستمسكات');return}
+    checkpoint();placements.forEach(o=>{o.i.x=o.x;o.i.y=o.y});changed();
+}
 // Four-point perspective rectification: solve inverse projective mapping.
 function solve(A,b){const n=b.length;A=A.map((r,i)=>[...r,b[i]]);for(let c=0;c<n;c++){let pivot=c;for(let r=c+1;r<n;r++)if(Math.abs(A[r][c])>Math.abs(A[pivot][c]))pivot=r;[A[c],A[pivot]]=[A[pivot],A[c]];if(Math.abs(A[c][c])<1e-10)throw Error('الزوايا متقاربة جدًا');const d=A[c][c];for(let j=c;j<=n;j++)A[c][j]/=d;for(let r=0;r<n;r++)if(r!==c){const k=A[r][c];for(let j=c;j<=n;j++)A[r][j]-=k*A[c][j]}}return A.map(r=>r[n])}
 function homography(points){const A=[],b=[];[[0,0],[1,0],[1,1],[0,1]].forEach(([u,v],i)=>{const {x,y}=points[i];A.push([u,v,1,0,0,0,-u*x,-v*x],[0,0,0,u,v,1,-u*y,-v*y]);b.push(x,y)});return solve(A,b)}
@@ -501,7 +536,19 @@ function runEdgeDetection(imageData){
         }catch(error){finished=true;clearTimeout(timer);if(url)URL.revokeObjectURL(url);worker?.terminate();edgeDetectionTask=null;resolve(detectDocumentQuad(imageData))}
     });
 }
-function resetCrop(){if(!crop)return;cancelEdgeDetection();endCropDrag();crop.points=fullImagePoints();setEdgeStatus('تم تحديد كامل الصورة؛ حرّك الزوايا أو استخدم اكتشاف الحواف.');drawCrop()}
+function resetCrop(){if(!crop)return;cancelEdgeDetection();endCropDrag();crop.mode='crop';crop.points=fullImagePoints();setEdgeStatus('تم تحديد كامل الصورة؛ حرّك الزوايا أو استخدم اكتشاف الحواف.');refreshCropPreview()}
+function syncCropMode(){
+    if(!crop)return;const preview=crop.mode==='preview';
+    $('cropDialog').dataset.mode=preview?'preview':'crop';$('cropMode').textContent=preview?'إعادة القص':'إنهاء القص';
+    $('cropHelp').textContent=preview?'هذه معاينة الوثيقة المقصوصة مكبّرة. اختر الفلتر المناسب، أو اضغط «إعادة القص» لتعديل الزوايا.':'حدّد زوايا الوثيقة ثم اضغط «إنهاء القص» لمعاينتها مكبّرة دون المنطقة المظللة.';
+}
+function setCropMode(mode){
+    if(!crop)return;cancelEdgeDetection();endCropDrag();
+    if(mode==='preview'&&!validQuad(crop.points)){toast('اضبط الزوايا قبل إنهاء القص');return}
+    const previous=crop.mode;crop.mode=mode;
+    try{refreshCropPreview();setEdgeStatus(mode==='preview'?'تم إخفاء الأجزاء خارج القص؛ المعاينة لا تغيّر قياس المستمسك في الورقة.':'تمت استعادة الصورة الأصلية والزوايا؛ اضغط «إنهاء القص» بعد التعديل.')}
+    catch(error){crop.mode=previous;syncCropMode();toast('تعذرت المعاينة؛ يمكنك تعديل الزوايا أو المحاولة مجددًا')}
+}
 function hideCropLoupe(){const lens=$('cropLoupe');if(lens)lens.style.display='none'}
 function drawCropLoupe(){
     if(!crop||activeCorner<0||!crop.rect)return;
@@ -526,7 +573,7 @@ function bindCropPointerEvents(){
     const canvas=$('cropCanvas');
     const position=event=>{const r=canvas.getBoundingClientRect();return{x:(event.clientX-r.left)*canvas.width/r.width,y:(event.clientY-r.top)*canvas.height/r.height}};
     canvas.onpointerdown=event=>{
-        if(!crop||!crop.rect||cropPointerId!==null||event.button!==0)return;
+        if(!crop||crop.mode==='preview'||!crop.rect||cropPointerId!==null||event.button!==0)return;
         const p=position(event);let nearest=-1,distance=event.pointerType==='touch'?32:24;
         crop.points.forEach((point,index)=>{const d=Math.hypot(p.x-crop.rect.x-point.x*crop.rect.w,p.y-crop.rect.y-point.y*crop.rect.h);if(d<distance){distance=d;nearest=index}});
         if(nearest<0)return;
@@ -546,6 +593,7 @@ function bindCropPointerEvents(){
 }
 async function autoDetectCropEdges({automatic=false}={}){
     const session=crop;if(!session||cropPointerId!==null)return false;
+    if(session.mode==='preview'){session.mode='crop';refreshCropPreview()}
     const token=++edgeDetectionToken,button=$('autoCrop');button.disabled=true;button.textContent='جارٍ اكتشاف الحواف…';
     setEdgeStatus('جارٍ البحث عن حدود المستمسك…');endCropDrag();
     await new Promise(resolve=>setTimeout(resolve,25));
@@ -621,11 +669,34 @@ function filterPixels(pixels,filter='color',brightness=0,contrast=100,width,heig
     }
     return pixels;
 }
+function rectifyCropImage(session,width,height){
+    const src=document.createElement('canvas');src.width=session.img.width;src.height=session.img.height;
+    const ctx=src.getContext('2d');ctx.fillStyle='white';ctx.fillRect(0,0,src.width,src.height);ctx.drawImage(session.img,0,0);
+    const data=ctx.getImageData(0,0,src.width,src.height).data,out=document.createElement('canvas');out.width=width;out.height=height;
+    const oc=out.getContext('2d'),image=oc.createImageData(width,height),dst=image.data,m=homography(session.points);
+    for(let y=0;y<height;y++)for(let x=0;x<width;x++){
+        const u=width>1?x/(width-1):0,v=height>1?y/(height-1):0,d=m[6]*u+m[7]*v+1;
+        const sx=Math.max(0,Math.min(src.width-1,(m[0]*u+m[1]*v+m[2])/d*(src.width-1))),sy=Math.max(0,Math.min(src.height-1,(m[3]*u+m[4]*v+m[5])/d*(src.height-1)));
+        const ix=Math.floor(sx),iy=Math.floor(sy),fx=sx-ix,fy=sy-iy;
+        const nextX=Math.min(ix+1,src.width-1),nextY=Math.min(iy+1,src.height-1),a=(iy*src.width+ix)*4,b=(iy*src.width+nextX)*4,c=(nextY*src.width+ix)*4,e=(nextY*src.width+nextX)*4;
+        const wa=(1-fx)*(1-fy),wb=fx*(1-fy),wc=(1-fx)*fy,we=fx*fy,k=(y*width+x)*4;
+        for(let channel=0;channel<3;channel++)dst[k+channel]=data[a+channel]*wa+data[b+channel]*wb+data[c+channel]*wc+data[e+channel]*we;
+        dst[k+3]=255;
+    }
+    oc.putImageData(image,0,0);return out;
+}
 function refreshCropPreview(){
-    if(!crop)return;
-    const c=document.createElement('canvas'),ratio=Math.min(1,1000/Math.max(crop.img.width,crop.img.height));
-    c.width=Math.max(1,Math.round(crop.img.width*ratio));c.height=Math.max(1,Math.round(crop.img.height*ratio));
-    const ctx=c.getContext('2d');ctx.fillStyle='white';ctx.fillRect(0,0,c.width,c.height);ctx.drawImage(crop.img,0,0,c.width,c.height);
+    if(!crop)return;syncCropMode();let base=crop.img;
+    if(crop.mode==='preview'){
+        const item=findItem(crop.id),aspect=item?item.w/item.h:crop.img.width/crop.img.height;
+        const maxPreview=Math.min(850,Math.max(320,$('cropStage').clientWidth*Math.min(2,globalThis.devicePixelRatio||1)));
+        const width=Math.max(2,Math.round(Math.min(maxPreview,maxPreview*aspect))),height=Math.max(2,Math.round(width/aspect)),key=JSON.stringify(crop.points)+'|'+width+'|'+height;
+        if(!crop.rectified||crop.rectifiedKey!==key||crop.rectifiedSource!==crop.img){crop.rectified=rectifyCropImage(crop,width,height);crop.rectifiedKey=key;crop.rectifiedSource=crop.img}
+        base=crop.rectified;
+    }
+    const c=document.createElement('canvas'),ratio=Math.min(1,1000/Math.max(base.width,base.height));
+    c.width=Math.max(1,Math.round(base.width*ratio));c.height=Math.max(1,Math.round(base.height*ratio));
+    const ctx=c.getContext('2d');ctx.fillStyle='white';ctx.fillRect(0,0,c.width,c.height);ctx.drawImage(base,0,0,c.width,c.height);
     const image=ctx.getImageData(0,0,c.width,c.height);filterPixels(image.data,crop.filter,crop.brightness,crop.contrast,c.width,c.height);ctx.putImageData(image,0,0);
     crop.preview=c;syncFilterControls();drawCrop();
 }
@@ -636,15 +707,18 @@ async function editItemImage(id){
         const img=await loadImage(source);
         if(token!==imageLoadToken||!findItem(id))return;
         const edit=item.edit;
-        crop={id,img,source,points:edit?edit.points.map(p=>({...p})):fullImagePoints(),filter:edit?.filter||'color',brightness:edit?.brightness??0,contrast:edit?.contrast??100};
+        crop={id,img,source,mode:'preview',points:edit?edit.points.map(p=>({...p})):fullImagePoints(),filter:edit?.filter||'color',brightness:edit?.brightness??0,contrast:edit?.contrast??100};
         endCropDrag();cancelEdgeDetection();
         if(!$('cropDialog').open)$('cropDialog').showModal();refreshCropPreview();
-        setEdgeStatus(edit?'تمت استعادة زوايا القص المحفوظة؛ يمكن تعديلها بالعدسة أو إعادة اكتشاف الحواف.':'حرّك الزوايا أو استخدم اكتشاف الحواف.');
-        if(!edit)void autoDetectCropEdges({automatic:true});
+        setEdgeStatus('معاينة الصورة المقصوصة؛ اضغط «إعادة القص» لإظهار الصورة الأصلية والزوايا.');
     }catch(e){toast('تعذر فتح الصورة للتعديل')}
 }
 function drawCrop(){
     if(!crop)return;const canvas=$('cropCanvas'),stage=$('cropStage');canvas.width=stage.clientWidth;canvas.height=stage.clientHeight;
+    if(crop.mode==='preview'){
+        hideCropLoupe();const ctx=canvas.getContext('2d'),image=crop.preview,padding=12,s=Math.min(Math.max(1,canvas.width-padding*2)/image.width,Math.max(1,canvas.height-padding*2)/image.height);
+        const w=image.width*s,h=image.height*s;ctx.drawImage(image,(canvas.width-w)/2,(canvas.height-h)/2,w,h);return;
+    }
     const ctx=canvas.getContext('2d'),s=Math.min(Math.max(1,canvas.width-36)/crop.img.width,Math.max(1,canvas.height-36)/crop.img.height);
     const w=crop.img.width*s,h=crop.img.height*s,x=(canvas.width-w)/2,y=(canvas.height-h)/2;crop.rect={x,y,w,h};ctx.drawImage(crop.preview||crop.img,x,y,w,h);
     ctx.fillStyle='#0007';ctx.beginPath();ctx.rect(0,0,canvas.width,canvas.height);const pts=crop.points.map(p=>({x:x+p.x*w,y:y+p.y*h}));ctx.moveTo(pts[0].x,pts[0].y);for(let j=3;j>=0;j--)ctx.lineTo(pts[j].x,pts[j].y);ctx.closePath();ctx.fill('evenodd');ctx.strokeStyle='#a5b4fc';ctx.lineWidth=2;ctx.beginPath();pts.forEach((p,j)=>j?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();ctx.stroke();pts.forEach((p,j)=>{ctx.beginPath();ctx.arc(p.x,p.y,13,0,Math.PI*2);ctx.fillStyle='#5146d8';ctx.fill();ctx.strokeStyle='white';ctx.stroke();ctx.fillStyle='white';ctx.font='12px Arial';ctx.textAlign='center';ctx.fillText(j+1,p.x,p.y+4)})
@@ -658,20 +732,11 @@ async function applyCrop(){
     await new Promise(r=>setTimeout(r,30));
     try{
         if(crop!==session||!$('cropDialog').open)return;
-        const src=document.createElement('canvas');src.width=session.img.width;src.height=session.img.height;
-        const ctx=src.getContext('2d');ctx.fillStyle='white';ctx.fillRect(0,0,src.width,src.height);ctx.drawImage(session.img,0,0);
-        const data=ctx.getImageData(0,0,src.width,src.height).data,out=document.createElement('canvas'),target=Math.min(1800,Math.max(item.w*2,600));
-        out.width=Math.round(target);out.height=Math.max(2,Math.round(target*item.h/item.w));
-        const oc=out.getContext('2d'),image=oc.createImageData(out.width,out.height),dst=image.data,m=homography(points);
-        for(let y=0;y<out.height;y++)for(let x=0;x<out.width;x++){
-            const u=x/(out.width-1),v=y/(out.height-1),d=m[6]*u+m[7]*v+1;
-            const sx=Math.max(0,Math.min(src.width-1,(m[0]*u+m[1]*v+m[2])/d*(src.width-1))),sy=Math.max(0,Math.min(src.height-1,(m[3]*u+m[4]*v+m[5])/d*(src.height-1)));
-            const ix=Math.floor(sx),iy=Math.floor(sy),fx=sx-ix,fy=sy-iy;
-            const offsets=[(iy*src.width+ix)*4,(iy*src.width+Math.min(ix+1,src.width-1))*4,(Math.min(iy+1,src.height-1)*src.width+ix)*4,(Math.min(iy+1,src.height-1)*src.width+Math.min(ix+1,src.width-1))*4],weights=[(1-fx)*(1-fy),fx*(1-fy),(1-fx)*fy,fx*fy],k=(y*out.width+x)*4;
-            for(let c=0;c<3;c++)dst[k+c]=offsets.reduce((sum,o,j)=>sum+(data[o+c]*data[o+3]/255+255*(1-data[o+3]/255))*weights[j],0);dst[k+3]=255;
-        }
+        const target=Math.min(1800,Math.max(item.w*2,600));
+        const out=rectifyCropImage({...session,points},Math.round(target),Math.max(2,Math.round(target*item.h/item.w)));
+        const oc=out.getContext('2d'),image=oc.getImageData(0,0,out.width,out.height),dst=image.data;
         filterPixels(dst,settings.filter,settings.brightness,settings.contrast,out.width,out.height);oc.putImageData(image,0,0);
-        const result=out.toDataURL('image/jpeg',.92),source=session.source||src.toDataURL('image/jpeg',.94);
+        const result=out.toDataURL('image/jpeg',.92),source=session.source||session.img.toDataURL('image/jpeg',.94);
         checkpoint();item.image=result;item.edit={source,points,...settings};$('cropDialog').close();crop=null;changed();
     }catch(e){toast('تعذر معالجة الصورة: '+e.message)}
     finally{button.disabled=false;button.textContent='اعتماد الصورة';$('chooseAnotherImage').disabled=false;$('autoCrop').disabled=false}
@@ -746,6 +811,21 @@ function initFixedViewport(){
     document.addEventListener('touchstart',blockPinch,{passive:false});document.addEventListener('touchmove',blockPinch,{passive:false});
     for(const name of ['gesturestart','gesturechange'])document.addEventListener(name,event=>{if(event.cancelable)event.preventDefault()},{passive:false});
 }
+function blocksBrowserSelection(target){
+    const element=target?.nodeType===3?target.parentElement:target;
+    if(!element?.closest)return false;
+    if(element.closest('input,textarea,select,a,[contenteditable="true"],[contenteditable=""]'))return false;
+    return !!element.closest('#workspace,.app-header,dialog');
+}
+function initInteractionGuards(){
+    // Stop native text/image selection without cancelling normal clicks, controls or scrolling.
+    const blockNative=event=>{if(blocksBrowserSelection(event.target)&&event.cancelable)event.preventDefault()};
+    for(const name of ['selectstart','dragstart','contextmenu'])document.addEventListener(name,blockNative);
+    document.addEventListener('pointerdown',event=>{
+        if(!blocksBrowserSelection(event.target))return;
+        const selection=globalThis.getSelection?.();if(selection&&!selection.isCollapsed)selection.removeAllRanges();
+    });
+}
 function initToolbar(){
     const icons={
         add:'<path d="M12 4v16M4 12h16"/>',
@@ -788,7 +868,7 @@ async function handleImageSelection(e){
         const c=document.createElement('canvas'),s=Math.min(1,2200/Math.max(img.width,img.height));c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);
         const ctx=c.getContext('2d');ctx.fillStyle='white';ctx.fillRect(0,0,c.width,c.height);ctx.drawImage(img,0,0,c.width,c.height);
         endCropDrag();cancelEdgeDetection();
-        crop={id,img:c,source:c.toDataURL('image/jpeg',.94),points:fullImagePoints(),filter:'color',brightness:0,contrast:100};
+        crop={id,img:c,source:c.toDataURL('image/jpeg',.94),mode:'crop',points:fullImagePoints(),filter:'color',brightness:0,contrast:100};
         if(!$('cropDialog').open)$('cropDialog').showModal();
         refreshCropPreview();
         void autoDetectCropEdges({automatic:true});
@@ -798,14 +878,16 @@ async function handleImageSelection(e){
 $('file').onchange=handleImageSelection;$('cropFile').onchange=handleImageSelection;$('chooseAnotherImage').onclick=()=>{if(crop)openImagePicker(crop.id,true)};
 bindCropPointerEvents();
 $('autoCrop').onclick=()=>autoDetectCropEdges();$('resetCrop').onclick=resetCrop;$('applyCrop').onclick=applyCrop;
-$('rotateCrop').onclick=()=>{if(!crop)return;cancelEdgeDetection();endCropDrag();const c=document.createElement('canvas');c.width=crop.img.height;c.height=crop.img.width;const ctx=c.getContext('2d');ctx.translate(c.width,0);ctx.rotate(Math.PI/2);ctx.drawImage(crop.img,0,0);crop.img=c;crop.source=null;crop.points=fullImagePoints();refreshCropPreview();setEdgeStatus('تم تدوير الصورة؛ يمكن إعادة اكتشاف الحواف.')};
+$('cropMode').onclick=()=>setCropMode(crop?.mode==='preview'?'crop':'preview');
+$('rotateCrop').onclick=()=>{if(!crop)return;cancelEdgeDetection();endCropDrag();const c=document.createElement('canvas');c.width=crop.img.height;c.height=crop.img.width;const ctx=c.getContext('2d');ctx.translate(c.width,0);ctx.rotate(Math.PI/2);ctx.drawImage(crop.img,0,0);crop.img=c;crop.source=null;crop.mode='crop';crop.points=fullImagePoints();refreshCropPreview();setEdgeStatus('تم تدوير الصورة؛ يمكن إعادة اكتشاف الحواف.')};
 for(const id of ['imageFilter','imageBrightness','imageContrast'])$(id).addEventListener('input',()=>{if(!crop)return;crop.filter=$('imageFilter').value;crop.brightness=Number($('imageBrightness').value);crop.contrast=Number($('imageContrast').value);refreshCropPreview()});
 $('resetFilters').onclick=()=>{if(!crop)return;crop.filter='color';crop.brightness=0;crop.contrast=100;refreshCropPreview()};
 initToolbar();
-initShareOptions();initFixedViewport();
+initShareOptions();initFixedViewport();initInteractionGuards();
 $('saveProject').onclick=()=>download(new Blob([JSON.stringify(state)],{type:'application/json'}),'مستمسكات-نسخة.json');$('loadProject').onclick=()=>$('projectFile').click();$('projectFile').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;try{if(f.size>100*1024*1024)throw Error('حجم الملف كبير جدًا');const incoming=validate(JSON.parse(await f.text()));if(!confirm('فتح النسخة سيستبدل العمل الحالي. هل تريد المتابعة؟'))return;checkpoint();state=incoming;selected=null;changed();goActive()}catch(e){toast('تعذر فتح النسخة: '+e.message)}};$('print').onclick=async()=>{await Promise.all([...document.querySelectorAll('.item img')].map(i=>i.decode().catch(()=>{})));window.print()};window.addEventListener('resize',()=>{render();if(crop&&$('cropDialog').open)drawCrop()});document.addEventListener('visibilitychange',()=>{if(document.hidden){clearTimeout(saveTimer);persist()}});render();restore();
 </script>
 </html>
+
 
 
 
