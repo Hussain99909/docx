@@ -1,11 +1,11 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>ترتيب المستمسكات</title>
 <style>
-/* Ignore double-tap zoom; retain scrolling and intentional pinch zoom. */
-*{touch-action:manipulation}
+/* Keep the app viewport fixed; zoom the A4 sheet using its own controls. */
+*{touch-action:pan-x pan-y}
 :root{font-family:Tahoma,Arial,sans-serif;color:#203047;background:#edf1f6;font-size:15px}*{box-sizing:border-box}body{margin:0}button,input,select{font:inherit}button,select{cursor:pointer}button{border:1px solid #d8e0eb;border-radius:10px;background:white;color:inherit;min-height:44px;padding:9px 13px}button:hover{background:#eef2ff}button:focus-visible,select:focus-visible{outline:3px solid #818cf8;outline-offset:2px}button:disabled{opacity:.45;cursor:default}.primary{background:#5146d8;color:white;border-color:#5146d8}.danger{color:#b42336}header{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid #d8e0eb;padding:12px max(16px,env(safe-area-inset-right));display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}h1{font-size:18px;margin:0}small{color:#64748b;font-size:12px}.actions,.tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.tools{padding:10px 16px;background:#f8fafc;border-bottom:1px solid #d8e0eb}.tools select{min-height:44px;max-width:150px;background:white;border:1px solid #d8e0eb;border-radius:8px;padding:6px}.tools label{font-size:13px}main{overflow:auto;direction:ltr;padding:24px 16px 110px;min-height:70vh;overscroll-behavior-x:contain}#pages{width:max-content;min-width:100%;display:flex;flex-direction:column;align-items:center;gap:24px;direction:rtl}.sheet-slot{position:relative;flex:none}.page{position:absolute;left:0;top:0;width:794px;height:1123px;transform-origin:top left;background:white;box-shadow:0 5px 22px #20304720;outline:1px solid #cbd5e1;overflow:hidden;direction:ltr}.page.active{outline:3px solid #7064e7}.page:before{content:'';position:absolute;inset:0;background-image:linear-gradient(#edf1f5 1px,transparent 1px),linear-gradient(90deg,#edf1f5 1px,transparent 1px);background-size:20px 20px;pointer-events:none}.item{position:absolute;border:2px dashed #94a3b8;background:#f8fafc;display:flex;align-items:center;justify-content:center;flex-direction:column;direction:rtl;overflow:hidden}.item.selected{outline:4px solid #8b7cf6;outline-offset:-4px}.item img{width:100%;height:100%;object-fit:fill;pointer-events:none}.item.filled{border:0;background:white}.item .caption{font-size:17px;text-align:center;padding:8px}.item .controls{position:absolute;top:6px;left:6px;right:6px;display:flex;gap:6px;justify-content:space-between;z-index:2}.item .controls button{font-size:var(--control-font,16px);min-width:var(--control-size,44px);height:var(--control-size,44px);padding:6px;background:#fffffff2;box-shadow:0 2px 6px #0002}.move{touch-action:none;cursor:grab}.page-label{position:absolute;top:8px;right:12px;color:#94a3b8;font-size:13px;pointer-events:none}.dock{flex-wrap:wrap;position:fixed;bottom:0;inset-inline:0;z-index:20;background:#fffffff5;border-top:1px solid #d8e0eb;display:flex;justify-content:center;gap:10px;padding:10px 14px max(10px,env(safe-area-inset-bottom));box-shadow:0 -5px 20px #20304708}dialog{border:0;border-radius:18px;width:min(540px,94vw);max-height:88dvh;padding:20px;color:#203047}dialog::backdrop{background:#16233899}dialog h2{margin:0;font-size:19px}.dialog-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:8px}.templates{display:grid;gap:9px}.templates button{text-align:right;display:flex;flex-direction:column;gap:5px;padding:13px}.note{line-height:1.8;font-size:13px;color:#64748b}.crop-stage{position:relative;width:100%;height:min(52dvh,440px);background:#172234;overflow:hidden;touch-action:none}.crop-stage canvas{width:100%;height:100%;display:block}#cropDialog{width:min(760px,96vw)}#cropDialog .actions{margin-top:12px}.toast{position:fixed;bottom:88px;left:50%;transform:translateX(-50%);background:#203047;color:white;padding:12px 18px;border-radius:12px;z-index:100;max-width:90vw;display:none;direction:rtl}.status{display:block;margin-top:5px}#zoomValue{min-width:45px;text-align:center;font-size:13px}#file,#projectFile{display:none}@media(max-width:600px){header{padding:10px 12px;gap:10px}header .actions{gap:5px}header .actions button{padding:7px 9px;font-size:12px}h1{font-size:16px}.tools{padding:8px;gap:6px}.tools button{padding:7px 10px}.tools label{display:none}main{padding:18px 10px 110px}.dock button{font-size:13px;padding:9px 12px}.note{font-size:12px}}@media print{@page{size:A4 portrait;margin:0}html,body{background:white;margin:0!important}header,.tools,.dock,dialog,.toast{display:none!important}main{padding:0!important;overflow:visible!important;min-height:0}#pages{display:block;width:auto;min-width:0}.sheet-slot{width:210mm!important;height:297mm!important;break-after:page;page-break-after:always}.sheet-slot:last-child{break-after:auto;page-break-after:auto}.page{width:794px;height:1123px;transform:scale(.9996)!important;outline:0!important;box-shadow:none;position:relative;width:794px;height:1123px}.page:before,.page-label,.controls,.caption{display:none!important}.item{outline:none!important;border:0;background:white}.item:not(.filled){display:none!important}}
 .alignment-guides{position:absolute;inset:0;z-index:8;pointer-events:none;overflow:hidden}
 .alignment-guide{position:absolute;background:#2563eb;box-shadow:0 0 0 calc(var(--guide-size,2px)/3) #ffffffa6}
@@ -45,7 +45,7 @@
 .toolbar-row{display:flex;align-items:center;flex-wrap:nowrap;gap:8px;min-width:0;max-width:100%}
 .toolbar-row button,.more-summary{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;white-space:nowrap;font-size:13px;padding:8px 10px;flex:0 0 auto}
 .toolbar-row select{height:44px;width:130px;min-width:0;max-width:100%;padding:6px;border:1px solid #d8e0eb;border-radius:10px;background:#fff;font-size:13px;flex:0 1 130px}
-.toolbar-row #pageSelect{width:115px;flex-basis:115px}
+.toolbar-row #arrange{width:105px;flex:0 0 105px}
 .toolbar-icon{display:block;width:20px;height:20px;flex:none;pointer-events:none}
 .zoom-group{display:flex;align-items:center;justify-content:space-between;gap:4px;flex:0 0 auto;min-width:0}
 .zoom-group button{width:38px;min-width:0;font-size:20px;padding:0}.zoom-group #zoomValue{font-size:12px;min-width:36px;text-align:center}
@@ -57,12 +57,13 @@ main{padding-bottom:32px}.toast{bottom:max(20px,env(safe-area-inset-bottom))}
     .toolbar-brand{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
     .toolbar-row{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;width:100%}
     .toolbar-row button,.toolbar-row select{width:100%;max-width:100%;min-width:0;padding:5px;font-size:12px}
-    .toolbar-main #addDocument{grid-column:span 2}.toolbar-main #pageSelect{grid-column:span 2;width:100%;min-width:0}
-    .toolbar-main #addPage .toolbar-label,.toolbar-main #undo .toolbar-label,.toolbar-secondary #fit .toolbar-label{display:none}
+    .toolbar-main{grid-template-columns:minmax(0,1fr) 48px 48px}
+    .toolbar-main #share .toolbar-label,.toolbar-main #print .toolbar-label,.toolbar-secondary #fit .toolbar-label{display:none}
     .toolbar-main #addDocument .toolbar-icon{display:none}
-    .toolbar-secondary .zoom-group{grid-column:span 2;gap:2px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);width:100%}
+    .toolbar-secondary{grid-template-columns:minmax(0,1fr) 44px minmax(0,85px) 44px}
+    .toolbar-secondary .zoom-group{gap:2px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);width:100%}
     .zoom-group button{width:100%;padding:0;font-size:20px}.zoom-group #zoomValue{min-width:0;font-size:10px}
-    .toolbar-secondary #arrange{grid-column:span 2;width:100%;min-width:0;font-size:11px;padding:3px}
+    .toolbar-secondary #arrange{width:100%;min-width:0;font-size:11px;padding:3px}
     .toolbar-more{display:block;min-width:0}.more-summary{display:flex;min-height:44px;width:100%;padding:0;list-style:none;border:1px solid #d8e0eb;border-radius:10px;background:#fff;cursor:pointer}
     .more-summary::-webkit-details-marker{display:none}
     .toolbar-extra{position:absolute;top:calc(100% + 4px);inset-inline:6px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:12px;border:1px solid #d8e0eb;border-radius:14px;background:#fff;box-shadow:0 10px 30px #20304730;max-height:60dvh;overflow-y:auto;overscroll-behavior:contain}
@@ -70,31 +71,40 @@ main{padding-bottom:32px}.toast{bottom:max(20px,env(safe-area-inset-bottom))}
     .toolbar-extra .toolbar-label{display:inline;min-width:0;overflow-wrap:anywhere}
     main{padding-bottom:24px}
 }
+.page-end-actions{display:flex;justify-content:center;direction:rtl;padding:26px 0 4px;max-width:100%}
+#addPage{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:48px;padding:10px 24px;border:2px dashed #aaa3ed;color:#5146d8;background:#fafaff;font-weight:bold}
+#shareDialog .share-formats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.share-formats button{min-height:70px;display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center}
+.share-formats button[aria-pressed="true"]{border:2px solid #5146d8;background:#f1efff;color:#5146d8}
+#shareSend{width:100%;margin-top:12px}#shareStatus{min-height:40px;margin-top:12px}
+#shareFiles{display:grid;gap:8px;margin-top:12px}#shareFiles a{display:block;min-height:44px;padding:10px;border:1px solid #d8e0eb;border-radius:9px;color:#5146d8;overflow-wrap:anywhere;text-decoration:none}
+@media(pointer:coarse){select,input{font-size:16px!important}}
+@media print{.page-end-actions{display:none!important}}
 </style>
 <header class="app-header">
     <small id="saveStatus" class="toolbar-status" role="status">جاهز للعمل • يعمل دون إنترنت</small>
-    <div class="toolbar-row toolbar-main" role="toolbar" aria-label="إضافة المستمسكات والتنقل بين الصفحات">
+    <div class="toolbar-row toolbar-main" role="toolbar" aria-label="إضافة المستمسكات والمشاركة والطباعة">
         <div class="toolbar-brand"><h1>ترتيب المستمسكات</h1></div>
         <button class="primary" id="addDocument" data-icon="add">إضافة مستمسك</button>
-        <button id="addPage" data-icon="page">إضافة صفحة</button>
-        <select id="pageSelect" aria-label="الصفحة النشطة"></select>
-        <button id="undo" data-icon="undo">تراجع</button>
+        <button id="share" data-icon="share">مشاركة</button>
+        <button id="print" data-icon="print">طباعة</button>
     </div>
     <div class="toolbar-row toolbar-secondary" role="toolbar" aria-label="عرض المستمسكات وحفظها">
         <div class="zoom-group"><button id="zoomOut" aria-label="تصغير">−</button><span id="zoomValue" aria-label="نسبة التكبير">100%</span><button id="zoomIn" aria-label="تكبير">+</button></div>
         <button id="fit" data-icon="fit">ملاءمة العرض</button>
-        <select id="arrange" aria-label="ترتيب المستمسكات"><option value="">ترتيب تلقائي</option><option value="rows">صفوف</option><option value="column">عمود في الوسط</option></select>
+        <select id="arrange" aria-label="ترتيب المستمسكات"><option value="">ترتيب</option><option value="rows">صفوف</option><option value="column">عمود في الوسط</option></select>
         <details id="toolbarMore" class="toolbar-more" open>
             <summary class="more-summary" title="المزيد من الأدوات" aria-label="المزيد من الأدوات"><svg class="toolbar-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></summary>
             <div class="toolbar-extra">
                 <button id="editSelected" data-icon="image">اختيار / تغيير الصورة</button>
-                <button id="saveProject" data-icon="save">حفظ نسخة</button><button id="loadProject" data-icon="open">فتح نسخة</button><button id="pdf" data-icon="pdf">تنزيل PDF</button><button id="print" data-icon="print">طباعة</button>
+                <button id="saveProject" data-icon="save">حفظ نسخة</button><button id="loadProject" data-icon="open">فتح نسخة</button>
                 <button id="deleteSelected" class="danger" data-icon="delete" disabled>حذف المستمسك</button><button id="deletePage" class="danger" data-icon="deletePage">حذف الصفحة</button>
             </div>
         </details>
     </div>
 </header>
-<main id="workspace" aria-label="مساحة العمل"><div id="pages"></div></main>
+<main id="workspace" aria-label="مساحة العمل"><div id="pages"></div><div class="page-end-actions"><button id="addPage"><svg class="toolbar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 3H5v18h14V8l-5-5v5h5M8 14h8M12 10v8"/></svg>إضافة صفحة</button></div></main>
+<dialog id="shareDialog"><div class="dialog-head"><h2>مشاركة المستمسكات</h2><button data-close="shareDialog" aria-label="إغلاق">✕</button></div><p class="note">اختر الصيغة لتجهيز جميع الصفحات، ثم شارك الملفات أو نزّلها. تُصدّر الصور وحدها على خلفية بيضاء.</p><div class="share-formats"><button data-format="pdf" aria-pressed="false"><strong>PDF</strong><small>كل الصفحات في ملف واحد</small></button><button data-format="png" aria-pressed="false"><strong>PNG</strong><small>صور دون فقدان إضافي للجودة</small></button><button data-format="jpeg" aria-pressed="false"><strong>JPG</strong><small>صور بحجم أصغر</small></button><button data-format="webp" aria-pressed="false"><strong>WebP</strong><small>ضغط جيد للمتصفحات الحديثة</small></button></div><p id="shareStatus" class="note" role="status">اختر الصيغة المطلوبة.</p><button id="shareSend" class="primary" disabled>تجهيز الملفات أولًا</button><div id="shareFiles" aria-label="تنزيل الملفات بشكل منفصل"></div></dialog>
 <dialog id="templatesDialog"><div class="dialog-head"><h2>اختر نوع المستمسك</h2><button data-close="templatesDialog" aria-label="إغلاق">✕</button></div><div class="templates" id="templates"></div><p class="note">الأبعاد أبعاد قوالب قابلة للاستخدام، ويجب التحقق من مطابقتها للمستمسك الأصلي. حرّك المستمسك من مقبض ↔، ومرّر من أي مكان آخر.</p></dialog>
 <dialog id="cropDialog"><div class="dialog-head"><h2>قص الصورة والفلاتر</h2><button data-close="cropDialog" aria-label="إلغاء التعديل">✕</button></div><p class="note">حرّك الدوائر إلى زوايا الوثيقة واضبط الفلتر. لن تتغير الصورة الموجودة في الورقة حتى تضغط «اعتماد الصورة».</p><div class="crop-stage" id="cropStage"><canvas id="cropCanvas"></canvas><canvas id="cropLoupe" aria-hidden="true"></canvas></div><p id="edgeStatus" class="crop-status" role="status">يمكن اكتشاف حواف المستمسك تلقائيًا أو ضبط الزوايا يدويًا.</p><div class="filter-tools"><label for="imageFilter">الفلتر<select id="imageFilter"><option value="color">ألوان أصلية</option><option value="auto">تحسين تلقائي</option><option value="clean">مسح ملون وتقليل الظلال</option><option value="gray">تدرج رمادي</option><option value="bw">أبيض وأسود ثابت</option><option value="text">نص واضح (إضاءة متفاوتة)</option><option value="sharp">وضوح التفاصيل</option><option value="soft">تقليل التشويش</option></select></label><label for="imageBrightness">الإضاءة <output id="brightnessValue">0</output><input id="imageBrightness" type="range" min="-50" max="50" value="0"></label><label for="imageContrast">التباين <output id="contrastValue">100%</output><input id="imageContrast" type="range" min="50" max="200" value="100"></label></div><p id="filterHint" class="note" aria-live="polite"></p><div class="actions"><button id="applyCrop" class="primary">اعتماد الصورة</button><button id="chooseAnotherImage">اختيار صورة أخرى</button><button id="autoCrop">اكتشاف الحواف</button><button id="resetCrop">كامل الصورة</button><button id="resetFilters">إعادة الفلاتر</button><button id="rotateCrop">تدوير 90°</button></div><input type="file" id="cropFile" accept="image/*" hidden></dialog>
 <input type="file" id="file" accept="image/*"><input type="file" id="projectFile" accept=".json,application/json"><div class="toast" id="toast" role="status"></div>
@@ -109,7 +119,7 @@ state.active=state.pages[0].id;
 const page=()=>state.pages.find(p=>p.id===state.active)||state.pages[0];
 const findItem=id=>state.pages.flatMap(p=>p.items).find(i=>i.id===id);
 function toast(message){$('toast').textContent=message;$('toast').style.display='block';clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('toast').style.display='none',3500)}
-function checkpoint(){history.push(JSON.stringify(state));if(history.length>20)history.shift();$('undo').disabled=false}
+function checkpoint(){history.push(JSON.stringify(state));if(history.length>20)history.shift()}
 function changed(){render();scheduleSave()}
 function scheduleSave(){ $('saveStatus').textContent='جارٍ حفظ العمل…';clearTimeout(saveTimer);saveTimer=setTimeout(persist,350) }
 function persist(){const snapshot=JSON.stringify(state);saveChain=saveChain.catch(()=>{}).then(()=>new Promise(resolve=>{if(!db){$('saveStatus').textContent='الحفظ التلقائي غير متاح • استخدم حفظ نسخة';resolve();return}const tx=db.transaction('projects','readwrite');tx.objectStore('projects').put(snapshot,KEY);tx.oncomplete=()=>{$('saveStatus').textContent='تم الحفظ على هذا الجهاز';resolve()};tx.onerror=()=>{$('saveStatus').textContent='تعذر الحفظ • احفظ نسخة من العمل';resolve()}}));return saveChain}
@@ -161,8 +171,8 @@ const FILTER_PRESETS={
 };
 function validEdit(edit){return typeof edit.source==='string'&&/^data:image\/(jpeg|png|webp);base64,/.test(edit.source)&&Array.isArray(edit.points)&&edit.points.length===4&&edit.points.every(p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.y)&&p.x>=0&&p.x<=1&&p.y>=0&&p.y<=1)&&validQuad(edit.points)&&Object.hasOwn(FILTER_PRESETS,edit.filter)&&Number.isFinite(edit.brightness)&&edit.brightness>=-50&&edit.brightness<=50&&Number.isFinite(edit.contrast)&&edit.contrast>=50&&edit.contrast<=200}
 function computeScale(){if(autoFit)scale=Math.min(1,Math.max(.15,($('workspace').clientWidth-(innerWidth<600?20:32))/W));$('pages').style.setProperty('--control-size',(44/scale)+'px');$('pages').style.setProperty('--control-font',(18/scale)+'px');$('zoomValue').textContent=Math.round(scale*100)+'%'}
-function render(){computeScale();$('pages').replaceChildren();$('pageSelect').replaceChildren();state.pages.forEach((p,index)=>{const op=new Option('صفحة '+(index+1),p.id);$('pageSelect').add(op);const slot=document.createElement('section');slot.className='sheet-slot';slot.style.width=W*scale+'px';slot.style.height=H*scale+'px';slot.dataset.page=p.id;const el=document.createElement('div');el.className='page'+(p.id===state.active?' active':'');el.style.transform=`scale(${scale})`;el.addEventListener('click',()=>{activate(p.id);selectItem(null)});const label=document.createElement('span');label.className='page-label';label.textContent='A4 • '+(index+1);el.append(label);p.items.forEach(i=>el.append(renderItem(i,p)));slot.append(el);$('pages').append(slot)});$('pageSelect').value=state.active;$('undo').disabled=!history.length;updateItemActions()}
-function activate(id){state.active=id;document.querySelectorAll('.sheet-slot').forEach(s=>s.firstChild.classList.toggle('active',s.dataset.page===id));$('pageSelect').value=id;scheduleSave()}
+function render(){computeScale();$('pages').replaceChildren();state.pages.forEach((p,index)=>{const slot=document.createElement('section');slot.className='sheet-slot';slot.style.width=W*scale+'px';slot.style.height=H*scale+'px';slot.dataset.page=p.id;const el=document.createElement('div');el.className='page'+(p.id===state.active?' active':'');el.style.transform=`scale(${scale})`;el.addEventListener('click',()=>{activate(p.id);selectItem(null)});const label=document.createElement('span');label.className='page-label';label.textContent='A4 • '+(index+1);el.append(label);p.items.forEach(i=>el.append(renderItem(i,p)));slot.append(el);$('pages').append(slot)});updateItemActions()}
+function activate(id){state.active=id;document.querySelectorAll('.sheet-slot').forEach(s=>s.firstChild.classList.toggle('active',s.dataset.page===id));scheduleSave()}
 function updateToolbarLabel(id,text){const button=$(id),label=button.querySelector('.toolbar-label');if(label)label.textContent=text;else button.textContent=text;button.title=text;button.setAttribute('aria-label',text)}
 function updateItemActions(){const item=findItem(selected);$('editSelected').disabled=!item;updateToolbarLabel('editSelected',item?.image?'تغيير صورة المستمسك':'اختيار صورة للمستمسك');$('deleteSelected').disabled=!item}
 function selectItem(id){selected=id;document.querySelectorAll('.item').forEach(el=>el.classList.toggle('selected',el.dataset.id===id));updateItemActions()}
@@ -670,12 +680,77 @@ function download(blob,name){const url=URL.createObjectURL(blob),a=document.crea
 async function pageCanvas(p){const canvas=document.createElement('canvas');canvas.width=W*2;canvas.height=H*2;const ctx=canvas.getContext('2d');ctx.fillStyle='white';ctx.fillRect(0,0,canvas.width,canvas.height);for(const i of p.items)if(i.image){const img=await loadImage(i.image);ctx.drawImage(img,i.x*2,i.y*2,i.w*2,i.h*2)}return canvas}
 // Small, dependency-free PDF writer; document images are embedded as JPEG streams.
 function buildPDF(images){const enc=new TextEncoder(),chunks=[],offsets=[0];let size=0;const put=b=>{if(typeof b==='string')b=enc.encode(b);chunks.push(b);size+=b.length};const obj=(n,body)=>{offsets[n]=size;put(n+' 0 obj\n');body();put('\nendobj\n')};put('%PDF-1.4\n');obj(1,()=>put('<< /Type /Catalog /Pages 2 0 R >>'));obj(2,()=>put('<< /Type /Pages /Count '+images.length+' /Kids ['+images.map((_,i)=>(3+i*3)+' 0 R').join(' ')+'] >>'));images.forEach((im,i)=>{const n=3+i*3;obj(n,()=>put(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.276 841.89] /Resources << /XObject << /Im ${n+2} 0 R >> >> /Contents ${n+1} 0 R >>`));const command='q 595.276 0 0 841.89 0 0 cm /Im Do Q';obj(n+1,()=>put('<< /Length '+enc.encode(command).length+' >>\nstream\n'+command+'\nendstream'));obj(n+2,()=>{put(`<< /Type /XObject /Subtype /Image /Width ${W*2} /Height ${H*2} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${im.length} >>\nstream\n`);put(im);put('\nendstream')})});const start=size;put('xref\n0 '+offsets.length+'\n0000000000 65535 f \n');for(let i=1;i<offsets.length;i++)put(String(offsets[i]).padStart(10,'0')+' 00000 n \n');put('trailer\n<< /Size '+offsets.length+' /Root 1 0 R >>\nstartxref\n'+start+'\n%%EOF');return new Blob(chunks,{type:'application/pdf'})}
-async function exportPDF(){const btn=$('pdf');btn.disabled=true;updateToolbarLabel('pdf','جارٍ التصدير…');try{const snapshot=structuredClone(state),images=[];for(const p of snapshot.pages){const c=await pageCanvas(p),raw=atob(c.toDataURL('image/jpeg',.94).split(',')[1]);images.push(Uint8Array.from(raw,ch=>ch.charCodeAt(0)));c.width=c.height=1}download(buildPDF(images),'مستمسكات.pdf');toast('تم تجهيز ملف PDF')}catch(e){toast('تعذر التصدير: '+e.message)}finally{btn.disabled=false;updateToolbarLabel('pdf','تنزيل PDF')}}
+let preparedExports=[],shareExportToken=0;
+function clearPreparedExports(){for(const file of preparedExports)if(file.url)URL.revokeObjectURL(file.url);preparedExports=[];$('shareFiles').replaceChildren();$('shareSend').disabled=true}
+function openShareOptions(){shareExportToken++;clearPreparedExports();$('shareStatus').textContent='اختر الصيغة المطلوبة لتجهيز جميع الصفحات.';document.querySelectorAll('#shareDialog [data-format]').forEach(button=>{button.disabled=false;button.setAttribute('aria-pressed','false')});$('shareSend').textContent='تجهيز الملفات أولًا';if(!$('shareDialog').open)$('shareDialog').showModal()}
+function canvasBlob(canvas,type,quality){return new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(Error('تعذر إنشاء الصورة')),type,quality))}
+async function buildExportFiles(format,snapshot,onProgress=()=>{},isCurrent=()=>true){
+    if(!['pdf','png','jpeg','webp'].includes(format))throw Error('صيغة غير مدعومة');
+    const files=[],images=[];
+    for(let index=0;index<snapshot.pages.length;index++){
+        if(!isCurrent())return null;onProgress(index+1,snapshot.pages.length);
+        const canvas=await pageCanvas(snapshot.pages[index]);
+        try{
+            if(!isCurrent())return null;
+            if(format==='pdf'){const raw=atob(canvas.toDataURL('image/jpeg',.94).split(',')[1]);images.push(Uint8Array.from(raw,char=>char.charCodeAt(0)))}
+            else{
+                const blob=await canvasBlob(canvas,'image/'+format,format==='jpeg'?.94:.92),extension=blob.type==='image/png'?'png':blob.type==='image/webp'?'webp':blob.type==='image/jpeg'?'jpg':null;
+                if(!extension)throw Error('المتصفح لا يدعم إنشاء هذه الصيغة');
+                files.push({blob,name:'مستمسكات-'+String(index+1).padStart(2,'0')+'.'+extension});
+            }
+        }finally{canvas.width=canvas.height=1}
+        await new Promise(resolve=>setTimeout(resolve,0));
+    }
+    if(!isCurrent())return null;
+    return format==='pdf'?[{blob:buildPDF(images),name:'مستمسكات.pdf'}]:files;
+}
+function nativeShareFiles(files){
+    if(typeof File==='undefined'||!navigator.share||!navigator.canShare)return null;
+    try{const native=files.map(file=>new File([file.blob],file.name,{type:file.blob.type}));return navigator.canShare({files:native})?native:null}catch(error){return null}
+}
+async function exportFormat(format){
+    const token=++shareExportToken;clearPreparedExports();$('shareSend').textContent='جارٍ تجهيز الملفات…';
+    document.querySelectorAll('#shareDialog [data-format]').forEach(button=>{button.disabled=true;button.setAttribute('aria-pressed',String(button.dataset.format===format))});
+    try{
+        const snapshot=structuredClone(state),files=await buildExportFiles(format,snapshot,(index,total)=>{$('shareStatus').textContent='تجهيز الصفحة '+index+' من '+total+'…'},()=>token===shareExportToken&&$('shareDialog').open);
+        if(!files||token!==shareExportToken)return;
+        preparedExports=files.map(file=>({...file,url:URL.createObjectURL(file.blob)}));
+        for(const file of preparedExports){const link=document.createElement('a');link.href=file.url;link.download=file.name;link.textContent='تنزيل '+file.name;$('shareFiles').append(link)}
+        const canShare=!!nativeShareFiles(preparedExports);
+        $('shareSend').textContent=canShare?'مشاركة الملفات':'تنزيل الملفات';$('shareSend').disabled=false;
+        const actualTypes=[...new Set(files.map(file=>file.name.split('.').pop().toUpperCase()))].join(' / ');
+        $('shareStatus').textContent='جاهز: '+snapshot.pages.length+' صفحة • '+files.length+' ملف • '+actualTypes+'. '+(canShare?'اضغط مشاركة لاختيار التطبيق.':'المشاركة المباشرة غير متاحة في هذا المتصفح؛ يمكنك تنزيل الملفات.');
+        if(format==='webp'&&files.some(file=>file.blob.type!=='image/webp'))$('shareStatus').textContent+=' استُخدمت PNG لأن المتصفح لا يدعم تصدير WebP.';
+    }catch(error){if(token===shareExportToken){$('shareStatus').textContent='تعذر التجهيز: '+error.message;$('shareSend').textContent='اختر صيغة لإعادة المحاولة'}}
+    finally{if(token===shareExportToken)document.querySelectorAll('#shareDialog [data-format]').forEach(button=>button.disabled=false)}
+}
+function downloadPreparedExports(){for(const file of preparedExports)download(file.blob,file.name);$('shareStatus').textContent='تم طلب تنزيل '+preparedExports.length+' ملف. إذا منع المتصفح تنزيل عدة صور، استخدم روابط الملفات أدناه.'}
+function sharePreparedExport(){
+    if(!preparedExports.length)return;
+    const files=nativeShareFiles(preparedExports);
+    if(!files){downloadPreparedExports();return}
+    $('shareSend').disabled=true;
+    // Called directly from this button click, after preparation, to retain mobile user activation.
+    try{Promise.resolve(navigator.share({files,title:'المستمسكات'})).then(()=>{$('shareStatus').textContent='تمت المشاركة.'}).catch(error=>{if(error.name==='AbortError')$('shareStatus').textContent='أُلغيت المشاركة؛ الملفات جاهزة للمحاولة مجددًا.';else{$('shareStatus').textContent='تعذرت المشاركة؛ استخدم روابط التنزيل أدناه.';toast('يمكن تنزيل الملفات من الروابط داخل نافذة المشاركة')}}).finally(()=>{$('shareSend').disabled=!preparedExports.length})}
+    catch(error){$('shareSend').disabled=false;$('shareStatus').textContent='تعذرت المشاركة؛ استخدم روابط التنزيل أدناه.'}
+}
+function initShareOptions(){
+    $('share').onclick=openShareOptions;
+    document.querySelectorAll('#shareDialog [data-format]').forEach(button=>button.onclick=()=>exportFormat(button.dataset.format));
+    $('shareSend').onclick=sharePreparedExport;
+    $('shareDialog').addEventListener('close',()=>{shareExportToken++;clearPreparedExports()});
+}
+async function exportPDF(){const files=await buildExportFiles('pdf',structuredClone(state));if(files)download(files[0].blob,files[0].name)}
+function initFixedViewport(){
+    const blockPinch=event=>{if(event.touches?.length>1&&event.cancelable)event.preventDefault()};
+    document.addEventListener('touchstart',blockPinch,{passive:false});document.addEventListener('touchmove',blockPinch,{passive:false});
+    for(const name of ['gesturestart','gesturechange'])document.addEventListener(name,event=>{if(event.cancelable)event.preventDefault()},{passive:false});
+}
 function initToolbar(){
     const icons={
         add:'<path d="M12 4v16M4 12h16"/>',
         page:'<path d="M14 3H5v18h14V8l-5-5v5h5M8 14h8M12 10v8"/>',
-        undo:'<path d="M8 5 3 10l5 5M3 10h10a7 7 0 0 1 7 7v2"/>',
+        share:'<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 10.5 6.8-4m-6.8 7 6.8 4"/>',
         fit:'<path d="M8 3H3v5M16 3h5v5M21 16v5h-5M8 21H3v-5M8 8h8v8H8z"/>',
         image:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="m3 16 6-6 5 5 3-3 4 4M15 8h.01"/>',
         save:'<path d="M5 3h14v18H5zM8 3v6h8V3M8 21v-7h8v7"/>',
@@ -699,7 +774,7 @@ function initToolbar(){
 TYPES.forEach(t=>{const b=document.createElement('button');b.textContent=t[1];const s=document.createElement('small');s.textContent=t[0]==='five'?'خمسة أزواج مصغرة في ورقة واحدة':`${t[2]} × ${t[3]} مم • ${isDoubleSided(t[0])?'وجهان':'وجه واحد'}`;b.append(s);b.onclick=()=>addTemplate(t);$('templates').append(b)});
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>$(b.dataset.close).close());
 document.addEventListener('pointerdown',clearSelectionOutside);
-$('addDocument').onclick=()=>$('templatesDialog').showModal();$('addPage').onclick=()=>{checkpoint();newPage();changed();goActive()};$('deletePage').onclick=()=>{if(!confirm('حذف الصفحة النشطة وكل مستمسكاتها؟'))return;checkpoint();const idx=state.pages.indexOf(page());state.pages.splice(idx,1);if(!state.pages.length)newPage();state.active=state.pages[Math.max(0,idx-1)].id;selected=null;changed();goActive()};$('pageSelect').onchange=e=>{activate(e.target.value);goActive()};$('undo').onclick=()=>{if(!history.length)return;state=JSON.parse(history.pop());selected=null;changed()};$('fit').onclick=()=>{autoFit=true;render()};function zoom(delta){autoFit=false;scale=Math.max(.2,Math.min(2,scale+delta));render()}$('zoomIn').onclick=()=>zoom(.1);$('zoomOut').onclick=()=>zoom(-.1);$('arrange').onchange=e=>{arrange(e.target.value);e.target.value=''};$('editSelected').onclick=()=>openImagePicker(selected);$('deleteSelected').onclick=()=>deleteItem(selected);
+$('addDocument').onclick=()=>$('templatesDialog').showModal();$('addPage').onclick=()=>{checkpoint();newPage();selected=null;changed();goActive()};$('deletePage').onclick=()=>{if(!confirm('حذف الصفحة النشطة وكل مستمسكاتها؟'))return;checkpoint();const idx=state.pages.indexOf(page());state.pages.splice(idx,1);if(!state.pages.length)newPage();state.active=state.pages[Math.max(0,idx-1)].id;selected=null;changed();goActive()};$('fit').onclick=()=>{autoFit=true;render()};function zoom(delta){autoFit=false;scale=Math.max(.2,Math.min(2,scale+delta));render()}$('zoomIn').onclick=()=>zoom(.1);$('zoomOut').onclick=()=>zoom(-.1);$('arrange').onchange=e=>{arrange(e.target.value);e.target.value=''};$('editSelected').onclick=()=>openImagePicker(selected);$('deleteSelected').onclick=()=>deleteItem(selected);
 let imagePickerTarget=null,imageLoadToken=0;
 function openImagePicker(id,fromCrop=false){if(!findItem(id))return;imagePickerTarget=id;const input=$(fromCrop?'cropFile':'file');input.value='';input.click()}
 async function handleImageSelection(e){
@@ -727,7 +802,8 @@ $('rotateCrop').onclick=()=>{if(!crop)return;cancelEdgeDetection();endCropDrag()
 for(const id of ['imageFilter','imageBrightness','imageContrast'])$(id).addEventListener('input',()=>{if(!crop)return;crop.filter=$('imageFilter').value;crop.brightness=Number($('imageBrightness').value);crop.contrast=Number($('imageContrast').value);refreshCropPreview()});
 $('resetFilters').onclick=()=>{if(!crop)return;crop.filter='color';crop.brightness=0;crop.contrast=100;refreshCropPreview()};
 initToolbar();
-$('saveProject').onclick=()=>download(new Blob([JSON.stringify(state)],{type:'application/json'}),'مستمسكات-نسخة.json');$('loadProject').onclick=()=>$('projectFile').click();$('projectFile').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;try{if(f.size>100*1024*1024)throw Error('حجم الملف كبير جدًا');const incoming=validate(JSON.parse(await f.text()));if(!confirm('فتح النسخة سيستبدل العمل الحالي. هل تريد المتابعة؟'))return;checkpoint();state=incoming;selected=null;changed();goActive()}catch(e){toast('تعذر فتح النسخة: '+e.message)}};$('pdf').onclick=exportPDF;$('print').onclick=async()=>{await Promise.all([...document.querySelectorAll('.item img')].map(i=>i.decode().catch(()=>{})));window.print()};window.addEventListener('resize',()=>{render();if(crop&&$('cropDialog').open)drawCrop()});document.addEventListener('visibilitychange',()=>{if(document.hidden){clearTimeout(saveTimer);persist()}});render();restore();
+initShareOptions();initFixedViewport();
+$('saveProject').onclick=()=>download(new Blob([JSON.stringify(state)],{type:'application/json'}),'مستمسكات-نسخة.json');$('loadProject').onclick=()=>$('projectFile').click();$('projectFile').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;try{if(f.size>100*1024*1024)throw Error('حجم الملف كبير جدًا');const incoming=validate(JSON.parse(await f.text()));if(!confirm('فتح النسخة سيستبدل العمل الحالي. هل تريد المتابعة؟'))return;checkpoint();state=incoming;selected=null;changed();goActive()}catch(e){toast('تعذر فتح النسخة: '+e.message)}};$('print').onclick=async()=>{await Promise.all([...document.querySelectorAll('.item img')].map(i=>i.decode().catch(()=>{})));window.print()};window.addEventListener('resize',()=>{render();if(crop&&$('cropDialog').open)drawCrop()});document.addEventListener('visibilitychange',()=>{if(document.hidden){clearTimeout(saveTimer);persist()}});render();restore();
 </script>
 </html>
 
