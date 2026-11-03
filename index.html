@@ -49,7 +49,15 @@ input,textarea,[contenteditable="true"],[contenteditable=""]{-webkit-user-select
 #signatureCanvas{display:block;width:100%;height:auto;aspect-ratio:2.5;background:#fff;border:1px solid #cbd5e1;border-radius:12px;touch-action:none;cursor:crosshair}
 .signature-tools{margin-top:12px}
 .image-source-options{display:grid;gap:9px}
-.image-source-options button{text-align:right;min-height:52px}
+.image-source-options[hidden]{display:none}
+.image-source-options button,.image-source-file{text-align:right;min-height:52px}
+.image-source-file{position:relative;display:flex;align-items:center;padding:9px 13px;border:1px solid #d8e0eb;border-radius:10px;background:#fff;cursor:pointer}
+.image-source-file:focus-within{outline:3px solid #818cf8;outline-offset:2px}
+.image-source-file input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.image-source-file input::file-selector-button{width:100%;height:100%;cursor:pointer}
+.phone-camera-video:not([hidden]){display:block;width:100%;max-height:46dvh;background:#172234;border-radius:10px;object-fit:contain}
+.phone-camera-actions{margin-top:12px}
+.phone-camera-actions .image-source-file{min-height:44px}
 @media print{.item.filled.annotation{background:transparent}}
 .item .controls .action-move{top:var(--item-control-inset);right:var(--item-control-inset)}
 .item .controls .action-delete{top:var(--item-control-inset);left:var(--item-control-inset)}
@@ -207,14 +215,21 @@ main{padding-bottom:32px}.toast{bottom:max(20px,env(safe-area-inset-bottom))}
 </dialog>
 <dialog id="imageSourceDialog" aria-labelledby="imageSourceTitle">
     <div class="dialog-head"><h2 id="imageSourceTitle">اختر مصدر الصورة</h2><button data-close="imageSourceDialog" aria-label="إلغاء اختيار الصورة">✕</button></div>
-    <div class="image-source-options">
-        <button id="pickPhotoGallery" type="button">معرض الصور</button>
+    <div id="imageSourceOptions" class="image-source-options">
+        <label class="image-source-file">معرض الصور<input id="phoneGalleryFile" type="file" accept="image/*" aria-describedby="phoneGalleryHelp"></label>
         <button id="pickPhotoCamera" type="button">الكاميرا</button>
-        <button id="pickPhotoFiles" type="button">مدير الملفات</button>
+        <label class="image-source-file">مدير الملفات<input id="phoneManagerFile" type="file"></label>
+        <small id="phoneGalleryHelp" class="note">إذا فتح المتصفح مدير الملفات عند اختيار المعرض، اختر «الصور» من قائمته أو افتح مجلد DCIM/Camera.</small>
     </div>
-    <input id="phoneGalleryFile" type="file" accept="image/*" hidden>
-    <input id="phoneCameraFile" type="file" accept="image/*" capture="environment" hidden>
-    <input id="phoneManagerFile" type="file" hidden>
+    <div id="phoneCameraPanel" hidden>
+        <video id="phoneCameraPreview" class="phone-camera-video" autoplay muted playsinline aria-label="معاينة الكاميرا" hidden></video>
+        <p id="phoneCameraStatus" class="note" role="status"></p>
+        <div class="actions phone-camera-actions">
+            <button id="takePhonePhoto" class="primary" type="button" disabled>التقاط صورة</button>
+            <label class="image-source-file">فتح تطبيق الكاميرا<input id="phoneCameraFile" type="file" accept="image/*" capture="environment"></label>
+            <button id="backToImageSources" type="button">مصادر الصورة</button>
+        </div>
+    </div>
 </dialog>
 <dialog id="resolutionDialog" aria-labelledby="resolutionTitle"><div class="dialog-head"><h2 id="resolutionTitle">اختيار دقة أقل للمعالجة</h2><button id="resolutionClose" aria-label="إلغاء تقليل الدقة">✕</button></div><p id="resolutionMessage" class="note"></p><div id="resolutionOptions"></div><p class="note">لن تتغير الصورة على الورقة قبل اعتمادها. يمكنك الإلغاء والاحتفاظ بالصورة الحالية.</p><div class="actions"><button id="resolutionCancel">إلغاء</button></div></dialog>
 <dialog id="cropDialog" aria-labelledby="cropTitle" aria-describedby="cropHelp">
@@ -2162,31 +2177,129 @@ $('undo').onclick=()=>restoreWorkspaceHistory('undo');
 $('redo').onclick=()=>restoreWorkspaceHistory('redo');
 $('addTextAnnotation').onclick=()=>{$('templatesDialog').close();openTextEditor()};
 $('addSignatureAnnotation').onclick=()=>{$('templatesDialog').close();openSignatureEditor()};
-let imagePickerTarget=null,imageLoadToken=0;
+let imagePickerTarget=null,imageLoadToken=0,phoneCameraSession=null;
 function openImagePicker(id,fromCrop=false){
     if(!findItem(id))return;
     imagePickerTarget=id;
     if(compactTouchView()){
         const dialog=$('imageSourceDialog');
-        if(!dialog.open)dialog.showModal();
+        if(!dialog.open){showPhoneImageSources();dialog.showModal()}
         return;
     }
     const input=$(fromCrop?'cropFile':'file');input.value='';input.click();
 }
+function stopPhoneCamera(){
+    const session=phoneCameraSession;
+    phoneCameraSession=null;
+    const preview=$('phoneCameraPreview');
+    preview.srcObject=null;
+    preview.hidden=true;
+    $('takePhonePhoto').disabled=true;
+    session?.stream?.getTracks().forEach(track=>track.stop());
+}
+function showPhoneImageSources(){
+    stopPhoneCamera();
+    $('phoneCameraPanel').hidden=true;
+    $('imageSourceOptions').hidden=false;
+}
+async function startPhoneCamera(){
+    const dialog=$('imageSourceDialog');
+    if(!dialog.open)return;
+    stopPhoneCamera();
+    const session={id:imagePickerTarget,stream:null,takingPhoto:false};
+    phoneCameraSession=session;
+    const preview=$('phoneCameraPreview'),status=$('phoneCameraStatus');
+    $('imageSourceOptions').hidden=true;
+    $('phoneCameraPanel').hidden=false;
+    $('backToImageSources').focus();
+    const media=globalThis.navigator?.mediaDevices;
+    if(!media?.getUserMedia){
+        status.textContent='المعاينة المباشرة غير متاحة في هذا المتصفح. جرّب «فتح تطبيق الكاميرا».';
+        return;
+    }
+    status.textContent='جارٍ فتح الكاميرا. اسمح للمتصفح باستخدامها إذا طلب الإذن.';
+    try{
+        const stream=await media.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:3840},height:{ideal:2160}}});
+        if(!dialog.open||phoneCameraSession!==session){stream.getTracks().forEach(track=>track.stop());return}
+        session.stream=stream;
+        stream.getVideoTracks()[0]?.addEventListener('ended',()=>{
+            if(phoneCameraSession!==session)return;
+            stopPhoneCamera();
+            status.textContent='توقفت الكاميرا. يمكنك الرجوع إلى مصادر الصورة أو فتح تطبيق الكاميرا.';
+        });
+        preview.srcObject=stream;
+        preview.hidden=false;
+        await preview.play();
+        if(!dialog.open||phoneCameraSession!==session)return;
+        status.textContent='وجّه الكاميرا إلى المستمسك واضغط «التقاط صورة».';
+    }catch(error){
+        if(!dialog.open||phoneCameraSession!==session)return;
+        stopPhoneCamera();
+        status.textContent=error.name==='NotAllowedError'
+            ?'تعذر الحصول على إذن الكاميرا. تحقق من إذن الكاميرا للمتصفح أو جرّب «فتح تطبيق الكاميرا».'
+            :'تعذر تشغيل معاينة الكاميرا. جرّب «فتح تطبيق الكاميرا».';
+    }
+}
+async function takePhonePhoto(){
+    const dialog=$('imageSourceDialog'),session=phoneCameraSession,preview=$('phoneCameraPreview'),button=$('takePhonePhoto');
+    const isCurrent=()=>dialog.open&&phoneCameraSession===session;
+    if(!dialog.open||!session?.stream||session.takingPhoto||!preview.videoWidth||!preview.videoHeight)return;
+    session.takingPhoto=true;
+    button.disabled=true;
+    try{
+        let photo;
+        if(typeof globalThis.ImageCapture==='function'){
+            try{photo=await new globalThis.ImageCapture(session.stream.getVideoTracks()[0]).takePhoto()}catch{}
+        }
+        if(!isCurrent())return;
+        if(!photo?.size){
+            const canvas=document.createElement('canvas');
+            canvas.width=preview.videoWidth;canvas.height=preview.videoHeight;
+            canvas.getContext('2d').drawImage(preview,0,0);
+            photo=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',0.98));
+        }
+        if(!isCurrent())return;
+        if(!photo?.size)throw new Error('Empty camera capture');
+        stopPhoneCamera();
+        dialog.close();
+        await loadSelectedImage(photo,session.id);
+    }catch{
+        if(!isCurrent())return;
+        $('phoneCameraStatus').textContent='تعذر التقاط الصورة. حاول مرة أخرى أو جرّب «فتح تطبيق الكاميرا».';
+    }finally{
+        if(isCurrent()){session.takingPhoto=false;button.disabled=false}
+    }
+}
 function initPhoneImagePicker(){
     const dialog=$('imageSourceDialog');
-    for(const [buttonId,inputId] of [['pickPhotoGallery','phoneGalleryFile'],['pickPhotoCamera','phoneCameraFile'],['pickPhotoFiles','phoneManagerFile']]){
+    for(const inputId of ['phoneGalleryFile','phoneCameraFile','phoneManagerFile']){
         const input=$(inputId);
-        $(buttonId).onclick=()=>{input.value='';input.click()};
         input.onchange=event=>{
-            if(!input.files[0])return;
-            if(dialog.open)dialog.close();
+            if(!dialog.open||!input.files[0])return;
+            stopPhoneCamera();
+            dialog.close();
             void handleImageSelection(event);
         };
     }
+    $('pickPhotoCamera').onclick=startPhoneCamera;
+    $('takePhonePhoto').onclick=takePhonePhoto;
+    $('phoneCameraPreview').onplaying=()=>{
+        if(dialog.open&&phoneCameraSession?.stream&&!phoneCameraSession.takingPhoto)$('takePhonePhoto').disabled=false;
+    };
+    $('phoneCameraFile').onclick=()=>{
+        stopPhoneCamera();
+        $('phoneCameraStatus').textContent='إذا لم يفتح تطبيق الكاميرا، صوّر المستمسك بكاميرا الهاتف ثم اختر الصورة من المعرض.';
+    };
+    $('backToImageSources').onclick=()=>{showPhoneImageSources();$('pickPhotoCamera').focus()};
+    dialog.addEventListener('cancel',stopPhoneCamera);
+    dialog.addEventListener('close',()=>{if(!dialog.open)showPhoneImageSources()});
+    window.addEventListener('pagehide',showPhoneImageSources);
 }
-async function handleImageSelection(e){
+function handleImageSelection(e){
     const f=e.target.files[0],id=imagePickerTarget;e.target.value='';
+    return loadSelectedImage(f,id);
+}
+async function loadSelectedImage(f,id){
     if(!f||!findItem(id))return;
     const token=++imageLoadToken,wasOpen=$('cropDialog').open,url=URL.createObjectURL(f);
     try{
