@@ -29,6 +29,28 @@ input,textarea,[contenteditable="true"],[contenteditable=""]{-webkit-user-select
 .item.selected .controls{visibility:visible;opacity:1}
 .item .controls .item-action{position:absolute;display:flex;align-items:center;justify-content:center;pointer-events:auto;width:var(--item-control-size);height:var(--item-control-size);min-width:0;min-height:0;padding:0;border-radius:calc(var(--item-control-size)*.23);background:#fffffff0;box-shadow:0 2px 7px #20304726}
 .item-action svg{width:52%;height:52%;flex:none;pointer-events:none}
+.item.filled.annotation{background:transparent}
+.annotation canvas{display:block;width:100%;height:100%;pointer-events:none}
+.annotation img{object-fit:contain}
+.item .controls .action-edit-text{bottom:var(--item-control-inset);right:var(--item-control-inset);color:#5146d8}
+.annotation-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:14px}
+.annotation-options button{color:#5146d8;font-weight:bold;background:#f5f3ff}
+.text-toolbar{display:flex;align-items:flex-end;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.text-toolbar label{display:flex;flex-direction:column;gap:5px;font-size:13px}
+.text-toolbar select,.text-toolbar input{min-height:44px;border:1px solid #d8e0eb;border-radius:8px;background:white;padding:6px}
+.text-toolbar input[type=number]{width:78px}
+.text-toolbar input[type=color]{width:48px;padding:4px}
+.text-toolbar button[aria-pressed=true]{background:#eae6ff;border-color:#7468ef;color:#3e33b4}
+#annotationTextInput{width:100%;min-height:145px;max-height:40dvh;resize:vertical;display:block;padding:12px;border:1px solid #cbd5e1;border-radius:9px;line-height:1.5;text-align:right}
+#annotationTextInput:focus{outline:2px solid #818cf8;outline-offset:1px}
+.annotation-emoji{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}
+.annotation-emoji[hidden]{display:none}
+.annotation-emoji button{width:44px;padding:0;font-size:20px}
+#signatureCanvas{display:block;width:100%;height:auto;aspect-ratio:2.5;background:#fff;border:1px solid #cbd5e1;border-radius:12px;touch-action:none;cursor:crosshair}
+.signature-tools{margin-top:12px}
+.image-source-options{display:grid;gap:9px}
+.image-source-options button{text-align:right;min-height:52px}
+@media print{.item.filled.annotation{background:transparent}}
 .item .controls .action-move{top:var(--item-control-inset);right:var(--item-control-inset)}
 .item .controls .action-delete{top:var(--item-control-inset);left:var(--item-control-inset)}
 .item .controls .action-replace{bottom:var(--item-control-inset);right:var(--item-control-inset);color:#5146d8}
@@ -161,7 +183,39 @@ main{padding-bottom:32px}.toast{bottom:max(20px,env(safe-area-inset-bottom))}
         <button id="cancelBlankPdf" type="button" autofocus>إلغاء</button>
     </div>
 </dialog>
-<dialog id="templatesDialog"><div class="dialog-head"><h2>اختر نوع المستمسك</h2><button data-close="templatesDialog" aria-label="إغلاق">✕</button></div><div class="templates" id="templates"></div><p class="note">الأبعاد أبعاد قوالب قابلة للاستخدام، ويجب التحقق من مطابقتها للمستمسك الأصلي. حرّك المستمسك من مقبض ↔، ومرّر من أي مكان آخر.</p></dialog>
+<dialog id="templatesDialog"><div class="dialog-head"><h2>ماذا تريد أن تضيف؟</h2><button data-close="templatesDialog" aria-label="إغلاق">✕</button></div><div class="annotation-options"><button id="addTextAnnotation" type="button">مربع نص</button><button id="addSignatureAnnotation" type="button">رسم توقيع</button></div><div class="templates" id="templates"></div><p class="note">الأبعاد أبعاد قوالب قابلة للاستخدام، ويجب التحقق من مطابقتها للمستمسك الأصلي. حرّك المستمسك من مقبض ↔، ومرّر من أي مكان آخر.</p></dialog>
+<dialog id="textAnnotationDialog" aria-labelledby="textAnnotationTitle">
+    <div class="dialog-head"><h2 id="textAnnotationTitle">مربع نص</h2><button data-close="textAnnotationDialog" aria-label="إلغاء تعديل النص">✕</button></div>
+    <div class="text-toolbar" role="group" aria-label="تنسيق مربع النص">
+        <label>نوع الخط<select id="annotationFont"><option value="kufi">كوفي</option><option value="ottoman">عثماني</option><option value="arial">Arial</option><option value="calibri">Calibri</option><option value="tahoma" selected>Tahoma</option></select></label>
+        <label>الحجم<input id="annotationFontSize" type="number" min="8" max="96" step="1" value="24"></label>
+        <label>اللون<input id="annotationColor" type="color" value="#203047"></label>
+        <button id="annotationBold" type="button" aria-label="ثخين" aria-pressed="false" title="ثخين"><strong>B</strong></button>
+        <button id="annotationItalic" type="button" aria-label="مائل" aria-pressed="false" title="مائل"><em>I</em></button>
+        <button id="annotationEmojiToggle" type="button" aria-label="إضافة رمز تعبيري" aria-controls="annotationEmoji" aria-expanded="false" title="رمز تعبيري">😊</button>
+    </div>
+    <textarea id="annotationTextInput" dir="rtl" maxlength="4000" aria-label="نص المستمسك" placeholder="اكتب النص هنا…"></textarea>
+    <div id="annotationEmoji" class="annotation-emoji" role="group" aria-label="اختر رمزًا تعبيريًا" hidden></div>
+    <p class="note">يُطبَّق التنسيق على النص داخل المربع كله. يمكنك كتابة أكثر من سطر.</p>
+    <div class="actions"><button id="saveAnnotationText" class="primary" type="button" disabled>اعتماد النص</button><button type="button" data-close="textAnnotationDialog">إلغاء</button></div>
+</dialog>
+<dialog id="signatureDialog" aria-labelledby="signatureTitle">
+    <div class="dialog-head"><h2 id="signatureTitle">رسم توقيع</h2><button data-close="signatureDialog" aria-label="إلغاء التوقيع">✕</button></div>
+    <p class="note">ارسم توقيعك داخل المساحة بإصبعك أو الماوس، ثم اضغط «إضافة التوقيع».</p>
+    <canvas id="signatureCanvas" width="1200" height="480" aria-label="مساحة رسم التوقيع"></canvas>
+    <div class="actions signature-tools"><button id="saveSignature" type="button" class="primary" disabled>إضافة التوقيع</button><button id="undoSignatureStroke" type="button" disabled>تراجع عن الخط</button><button id="clearSignature" type="button" disabled>مسح الرسم</button></div>
+</dialog>
+<dialog id="imageSourceDialog" aria-labelledby="imageSourceTitle">
+    <div class="dialog-head"><h2 id="imageSourceTitle">اختر مصدر الصورة</h2><button data-close="imageSourceDialog" aria-label="إلغاء اختيار الصورة">✕</button></div>
+    <div class="image-source-options">
+        <button id="pickPhotoGallery" type="button">معرض الصور</button>
+        <button id="pickPhotoCamera" type="button">الكاميرا</button>
+        <button id="pickPhotoFiles" type="button">مدير الملفات</button>
+    </div>
+    <input id="phoneGalleryFile" type="file" accept="image/*" hidden>
+    <input id="phoneCameraFile" type="file" accept="image/*" capture="environment" hidden>
+    <input id="phoneManagerFile" type="file" hidden>
+</dialog>
 <dialog id="resolutionDialog" aria-labelledby="resolutionTitle"><div class="dialog-head"><h2 id="resolutionTitle">اختيار دقة أقل للمعالجة</h2><button id="resolutionClose" aria-label="إلغاء تقليل الدقة">✕</button></div><p id="resolutionMessage" class="note"></p><div id="resolutionOptions"></div><p class="note">لن تتغير الصورة على الورقة قبل اعتمادها. يمكنك الإلغاء والاحتفاظ بالصورة الحالية.</p><div class="actions"><button id="resolutionCancel">إلغاء</button></div></dialog>
 <dialog id="cropDialog" aria-labelledby="cropTitle" aria-describedby="cropHelp">
     <div class="crop-toolbar crop-toolbar-top" role="toolbar" aria-label="أدوات قص الصورة">
@@ -217,6 +271,7 @@ function snapshotWorkspace(){
             const copy={...item};
             if(item.edit)copy.edit={...item.edit,points:item.edit.points.map(point=>({...point}))};
             if(item.missingFace)copy.missingFace={...item.missingFace};
+            if(item.textStyle)copy.textStyle={...item.textStyle};
             return copy;
         });
         return {...sheet,items};
@@ -282,6 +337,7 @@ function validateDocumentLinks(s){
     for(const p of s.pages)if(p.documentsPerPage!==undefined&&![1,2].includes(p.documentsPerPage))throw Error('عدد المستمسكات في الصفحة غير صالح');
     for(const p of s.pages)if(p.keepEmpty!==undefined&&typeof p.keepEmpty!=='boolean')throw Error('حالة الصفحة الفارغة غير صالحة');
     for(const i of s.pages.flatMap(p=>p.items)){
+        if(!validAnnotation(i))throw Error('بيانات النص أو التوقيع غير صالحة');
         if(i.templateId!==undefined&&!TYPES.some(t=>t[0]===i.templateId))throw Error('نوع مستمسك غير صالح');
         if(i.pairId!==undefined||i.side!==undefined){
             if(typeof i.pairId!=='string'||!i.pairId.length||i.pairId.length>128||!['front','back'].includes(i.side)||!isDoubleSided(i.templateId))throw Error('بيانات وجهي المستمسك غير صالحة');
@@ -293,7 +349,7 @@ function validateDocumentLinks(s){
 function ensureDocumentPairs(project){
     const candidates=[];
     project.pages.forEach((p,index)=>p.items.forEach(i=>{
-        if(i.pairId)return;
+        if(i.pairId||i.kind)return;
         const numbered=i.label.match(/^(الأمام|الخلف) • ([1-5])$/);
         const templateId=i.templateId||(numbered?'five':TYPES.find(t=>i.label.includes(t[1]))?.[0]);
         if(!templateId)return;i.templateId=templateId;
@@ -339,6 +395,7 @@ function updateToolbarLabel(id,text){const button=$(id),label=button.querySelect
 function selectItem(id){selected=id;document.querySelectorAll('.item').forEach(el=>el.classList.toggle('selected',el.dataset.id===id))}
 function clearSelectionOutside(event){if(!event.target.closest('.item,.app-header,dialog'))selectItem(null)}
 const ITEM_ICONS={
+    'edit-text':'<path d="m4 16 12-12 4 4L8 20H4zm9-9 4 4"/>',
     move:'<path d="M4 12h16M4 12l4-4M4 12l4 4M20 12l-4-4M20 12l-4 4"/>',
     delete:'<path d="m6 6 12 12M18 6 6 18"/>',
     replace:'<path d="M4 7h15m-4-4 4 4-4 4M20 17H5m4-4-4 4 4 4"/>',
@@ -361,25 +418,30 @@ function itemAction(kind,label,handler){
     button.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">'+ITEM_ICONS[kind]+'</svg>';
     if(handler)button.onclick=event=>{event.stopPropagation();handler()};return button;
 }
+function compactTouchView(){
+    return !!globalThis.matchMedia?.('(pointer: coarse) and (max-width: 600px), (pointer: coarse) and (max-height: 600px)')?.matches;
+}
 function renderItem(i,p){
-    const el=document.createElement('div');el.className='item'+(i.image?' filled':'')+(selected===i.id?' selected':'');el.dataset.id=i.id;
+    const textItem=i.kind==='text';
+    const el=document.createElement('div');el.className='item'+(i.image||textItem?' filled':'')+(i.kind?' annotation':'')+(selected===i.id?' selected':'');el.dataset.id=i.id;
     el.tabIndex=0;el.setAttribute('role','group');el.setAttribute('aria-label',i.label);el.addEventListener('focus',()=>{activate(p.id);selectItem(i.id)});
     Object.assign(el.style,{left:i.x+'px',top:i.y+'px',width:i.w+'px',height:i.h+'px'});
     const pairFaces=alignedDocumentPair(i.id),hasPairControls=pairFaces.length===2;
     const hasMissingFace=missingOtherFace(i),hasLinkedFace=!!i.pairId&&!hasMissingFace;
     if(hasPairControls)el.className+=' paired-controls';
-    const compactTouch=globalThis.matchMedia?.('(pointer: coarse) and (max-width: 600px), (pointer: coarse) and (max-height: 600px)')?.matches;
-    const iconScale=compactTouch ? 0.8 : 1;
+    const iconScale=compactTouchView() ? 0.8 : 1;
     const metrics=itemControlMetrics(i,scale,hasMissingFace,hasLinkedFace);
     el.style.setProperty('--item-control-size',metrics.size*iconScale+'px');
     el.style.setProperty('--item-control-inset',metrics.inset+'px');
     el.style.setProperty('--paired-arrow-gap',4/scale+'px');
-    if(i.image){const img=new Image();img.src=i.image;img.alt=i.label;img.draggable=false;el.append(img)}
+    if(textItem)el.append(renderTextAnnotation(i));
+    else if(i.image){const img=new Image();img.src=i.image;img.alt=i.label;img.draggable=false;el.append(img)}
     else{const text=document.createElement('span');text.className='caption';text.textContent=i.label;el.append(text);const add=document.createElement('button');add.textContent='＋ إضافة صورة';add.onclick=e=>{e.stopPropagation();activate(p.id);selectItem(i.id);openImagePicker(i.id)};el.append(add)}
     const controls=document.createElement('div');controls.className='controls';
     const move=itemAction('move','اسحب لتحريك '+i.label);bindDrag(move,el,i,p);controls.append(move);
     controls.append(itemAction('delete','حذف '+i.label,()=>deleteItem(i.id)));
-    if(i.image){
+    if(textItem)controls.append(itemAction('edit-text','تعديل النص',()=>openTextEditor(i.id)));
+    else if(i.image&&!i.kind){
         controls.append(itemAction('replace','استبدال صورة '+i.label,()=>{activate(p.id);selectItem(i.id);openImagePicker(i.id)}));
         controls.append(itemAction('crop','قص الصورة والفلاتر: '+i.label,()=>{activate(p.id);selectItem(i.id);editItemImage(i.id)}));
     }
@@ -703,6 +765,260 @@ function insertWorkspacePage(index){
 function goActive(){requestAnimationFrame(()=>{const slot=[...document.querySelectorAll('.sheet-slot')].find(s=>s.dataset.page===state.active);if(slot){const top=slot.getBoundingClientRect().top+scrollY-document.querySelector('header').offsetHeight-12;window.scrollTo({top,behavior:'smooth'})}})}
 function addBox(p,w,h,x,y,label,metadata={}){const item={id:uid(),w,h,x,y,label,image:null,...metadata};p.items.push(item);return item}
 function nextY(p){return p.items.length?Math.max(...p.items.map(i=>i.y+i.h))+28:40}
+const ANNOTATION_FONTS={
+    kufi:'"Noto Kufi Arabic","KFGQPC Kufi Stylistic","Kufi Standard GK","Droid Arabic Kufi",Dubai,Tahoma',
+    ottoman:'"KFGQPC Uthman Taha Naskh","Uthman Taha Naskh","Noto Naskh Arabic","Traditional Arabic","Arabic Typesetting",serif',
+    arial:'Arial,Tahoma',
+    calibri:'Calibri,"Carlito",Arial',
+    tahoma:'Tahoma,Arial'
+};
+const DEFAULT_TEXT_STYLE={font:'tahoma',size:24,bold:false,italic:false,color:'#203047'};
+const TEXT_PADDING=12;
+function annotationFontFamily(font){
+    return (Object.hasOwn(ANNOTATION_FONTS,font)?ANNOTATION_FONTS[font]:ANNOTATION_FONTS.tahoma)+',"Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif';
+}
+function validTextStyle(style){
+    return !!style&&Object.hasOwn(ANNOTATION_FONTS,style.font)&&Number.isInteger(style.size)&&style.size>=8&&style.size<=96
+        &&typeof style.bold==='boolean'&&typeof style.italic==='boolean'&&typeof style.color==='string'&&/^#[0-9a-f]{6}$/i.test(style.color);
+}
+function validAnnotation(item){
+    if(item.kind===undefined)return true;
+    if(item.templateId!==undefined||item.pairId!==undefined||item.side!==undefined||item.edit!==undefined)return false;
+    if(item.kind==='text')return !item.image&&typeof item.text==='string'&&item.text.length<=4000&&!!item.text.trim()&&validTextStyle(item.textStyle);
+    return item.kind==='signature'&&typeof item.image==='string'&&/^data:image\/png;base64,[A-Za-z0-9+/]/.test(item.image);
+}
+function annotationCanvasFont(style){
+    return (style.italic?'italic ':'')+(style.bold?'bold ':'')+style.size+'px '+annotationFontFamily(style.font);
+}
+function loadAnnotationFont(item){
+    return document.fonts?.load?.(annotationCanvasFont(item.textStyle),item.text)?.catch(()=>{})||Promise.resolve();
+}
+function annotationTextLines(context,item){
+    context.font=annotationCanvasFont(item.textStyle);
+    const width=item.w-2*TEXT_PADDING;
+    const fits=value=>context.measureText(value).width<=width;
+    const lines=[];
+    for(const paragraph of item.text.replace(/\r\n?/g,'\n').replace(/\t/g,'    ').split('\n')){
+        let line='';
+        for(let token of paragraph.match(/\S+|\s+/gu)||[]){
+            if(fits(line+token)){line+=token;continue}
+            if(line){lines.push(line.trimEnd());line='';token=token.trimStart()}
+            if(fits(token)){line=token;continue}
+            const segmenter=typeof Intl.Segmenter==='function'?new Intl.Segmenter('ar',{granularity:'grapheme'}):null;
+            const chars=segmenter?Array.from(segmenter.segment(token),part=>part.segment):Array.from(token);
+            for(const char of chars){
+                if(line&&!fits(line+char)){lines.push(line);line=''}
+                line+=char;
+            }
+        }
+        lines.push(line.trimEnd());
+    }
+    return lines;
+}
+function paintTextAnnotation(context,item,x,y){
+    context.save();
+    context.beginPath();context.rect(x,y,item.w,item.h);context.clip();
+    context.direction='rtl';context.textAlign='right';context.textBaseline='alphabetic';
+    context.fillStyle=item.textStyle.color;
+    const lineHeight=item.textStyle.size*1.5;
+    const lines=annotationTextLines(context,item);
+    lines.forEach((line,index)=>context.fillText(line,x+item.w-TEXT_PADDING,y+TEXT_PADDING+item.textStyle.size+index*lineHeight));
+    context.restore();
+}
+function renderTextAnnotation(item){
+    const canvas=document.createElement('canvas');
+    canvas.width=Math.ceil(item.w*2);canvas.height=Math.ceil(item.h*2);
+    canvas.setAttribute('role','img');canvas.setAttribute('aria-label',item.text);
+    const draw=()=>{
+        const context=canvas.getContext('2d');
+        if(!context)return;
+        context.setTransform(2,0,0,2,0,0);context.clearRect(0,0,item.w,item.h);
+        paintTextAnnotation(context,item,0,0);
+    };
+    draw();
+    void loadAnnotationFont(item).then(()=>{if(canvas.isConnected)draw()});
+    return canvas;
+}
+function placeAnnotation(data){
+    let sheet=page();
+    const {w,h,label,...metadata}=data;
+    if(!['text','signature'].includes(data.kind)||!validAnnotation(data)||!Number.isFinite(w)||!Number.isFinite(h)||w<1||h<1||w>W||h>H-40){
+        toast('تعذر إضافة العنصر بأبعاده الحالية');return null;
+    }
+    const preferred={x:(W-w)/2,y:nextY(sheet)};
+    let position=sheet.items.length<100?freeFacePosition(sheet,w,h,preferred):null;
+    if(!position&&state.pages.length>=100){toast('لا توجد مساحة متاحة لإضافة هذا العنصر');return null}
+    checkpoint();
+    if(!position){sheet=newPage();position={x:(W-w)/2,y:40}}
+    const item=addBox(sheet,w,h,position.x,position.y,label,metadata);
+    state.active=sheet.id;selected=item.id;changed();goActive();return item;
+}
+function saveTextAnnotation(id,text,textStyle){
+    const existing=id?findItem(id):null;
+    if(id&&existing?.kind!=='text')return null;
+    const draft={kind:'text',text:text.trim(),textStyle:{...textStyle},w:existing?.w||W-80};
+    if(!validAnnotation(draft))return null;
+    const context=document.createElement('canvas').getContext('2d');
+    if(!context){toast('تعذر معاينة النص');return null}
+    const requiredHeight=2*TEXT_PADDING+annotationTextLines(context,draft).length*textStyle.size*1.5;
+    const height=Math.max(80,Math.ceil(requiredHeight));
+    if(height>H-80){toast('النص أطول من مساحة الورقة. صغّر الخط أو قسّم النص إلى مربعين.');return null}
+    if(!existing)return placeAnnotation({...draft,h:height,label:'مربع نص'});
+    checkpoint();
+    existing.text=draft.text;existing.textStyle=draft.textStyle;existing.h=height;
+    existing.y=Math.min(existing.y,H-height);
+    selected=existing.id;changed();return existing;
+}
+let textEditorSession=null;
+function textEditorStyle(){
+    const parsed=Number.parseInt($('annotationFontSize').value,10);
+    return {
+        font:$('annotationFont').value,
+        size:Math.min(96,Math.max(8,Number.isFinite(parsed)?parsed:DEFAULT_TEXT_STYLE.size)),
+        bold:$('annotationBold').getAttribute('aria-pressed')==='true',
+        italic:$('annotationItalic').getAttribute('aria-pressed')==='true',
+        color:$('annotationColor').value
+    };
+}
+function syncTextEditor(){
+    const input=$('annotationTextInput'),style=textEditorStyle();
+    Object.assign(input.style,{
+        fontFamily:annotationFontFamily(style.font),fontSize:style.size+'px',
+        fontWeight:style.bold?'bold':'normal',fontStyle:style.italic?'italic':'normal',color:style.color
+    });
+    $('saveAnnotationText').disabled=!input.value.trim()||!!textEditorSession?.busy;
+}
+function openTextEditor(id=null){
+    const item=id?findItem(id):null,dialog=$('textAnnotationDialog');
+    if(dialog.open||(id&&item?.kind!=='text'))return;
+    textEditorSession={id,epoch:workspaceEpoch,busy:false};
+    const style=item?.textStyle||DEFAULT_TEXT_STYLE;
+    $('textAnnotationTitle').textContent=item?'تعديل النص':'مربع نص';
+    $('annotationTextInput').value=item?.text||'';
+    $('annotationFont').value=style.font;$('annotationFontSize').value=style.size;$('annotationColor').value=style.color;
+    $('annotationBold').setAttribute('aria-pressed',String(style.bold));
+    $('annotationItalic').setAttribute('aria-pressed',String(style.italic));
+    $('annotationEmoji').hidden=true;$('annotationEmojiToggle').setAttribute('aria-expanded','false');
+    syncTextEditor();dialog.showModal();$('annotationTextInput').focus();
+}
+function initTextEditor(){
+    const input=$('annotationTextInput'),dialog=$('textAnnotationDialog'),emoji=$('annotationEmoji');
+    for(const id of ['annotationFont','annotationFontSize','annotationColor','annotationTextInput']){
+        $(id).addEventListener('input',syncTextEditor);
+        $(id).addEventListener('change',syncTextEditor);
+    }
+    for(const id of ['annotationBold','annotationItalic'])$(id).onclick=()=>{
+        const button=$(id);button.setAttribute('aria-pressed',String(button.getAttribute('aria-pressed')!=='true'));syncTextEditor();
+    };
+    $('annotationEmojiToggle').onclick=()=>{
+        emoji.hidden=!emoji.hidden;$('annotationEmojiToggle').setAttribute('aria-expanded',String(!emoji.hidden));
+    };
+    for(const symbol of ['😊','✅','⭐','📌','📎','📝','✍️','☎️','📍','📅','🪪','🔹','🇮🇶']){
+        const button=document.createElement('button');button.type='button';button.textContent=symbol;
+        button.setAttribute('aria-label','إدراج '+symbol);
+        button.onclick=()=>{
+            const start=input.selectionStart??input.value.length,end=input.selectionEnd??start;
+            if(input.value.length-end+start+symbol.length>4000)return;
+            input.setRangeText(symbol,start,end,'end');input.focus();syncTextEditor();
+        };
+        emoji.append(button);
+    }
+    dialog.addEventListener('close',()=>{if(!dialog.open)textEditorSession=null});
+    $('saveAnnotationText').onclick=async()=>{
+        const session=textEditorSession;
+        if(!session||session.busy||!input.value.trim())return;
+        const text=input.value,textStyle=textEditorStyle();
+        session.busy=true;syncTextEditor();
+        try{
+            await loadAnnotationFont({text,textStyle});
+            if(dialog.open&&session===textEditorSession&&session.epoch===workspaceEpoch&&saveTextAnnotation(session.id,text,textStyle))dialog.close();
+        }catch(error){toast('تعذر اعتماد النص')}
+        finally{session.busy=false;if(session===textEditorSession)syncTextEditor()}
+    };
+}
+let signatureStrokes=[],signaturePointer=null;
+function syncSignatureButtons(){
+    const empty=signatureStrokes.length===0;
+    for(const id of ['saveSignature','undoSignatureStroke','clearSignature'])$(id).disabled=empty;
+}
+function signatureContext(){
+    const context=$('signatureCanvas').getContext('2d');
+    context.lineWidth=6;context.lineCap='round';context.lineJoin='round';context.strokeStyle=context.fillStyle='#172234';
+    return context;
+}
+function drawSignatureStroke(context,stroke){
+    const first=stroke[0];
+    context.beginPath();
+    if(stroke.length===1){context.arc(first.x,first.y,3,0,Math.PI*2);context.fill();return}
+    context.moveTo(first.x,first.y);
+    for(const point of stroke.slice(1))context.lineTo(point.x,point.y);
+    context.stroke();
+}
+function redrawSignature(){
+    const canvas=$('signatureCanvas'),context=signatureContext();
+    context.clearRect(0,0,canvas.width,canvas.height);
+    for(const stroke of signatureStrokes)drawSignatureStroke(context,stroke);
+    syncSignatureButtons();
+}
+function endSignatureStroke(event){
+    if(signaturePointer===null||(event&&event.pointerId!==signaturePointer))return;
+    const canvas=$('signatureCanvas'),id=signaturePointer;
+    signaturePointer=null;
+    if(canvas.hasPointerCapture?.(id))canvas.releasePointerCapture(id);
+}
+function openSignatureEditor(){
+    const dialog=$('signatureDialog');
+    if(dialog.open)return;
+    endSignatureStroke();signatureStrokes=[];redrawSignature();dialog.showModal();
+}
+function signatureImage(){
+    const canvas=$('signatureCanvas');
+    let left=canvas.width,top=canvas.height,right=0,bottom=0;
+    for(const stroke of signatureStrokes)for(const point of stroke){
+        left=Math.min(left,point.x);right=Math.max(right,point.x);
+        top=Math.min(top,point.y);bottom=Math.max(bottom,point.y);
+    }
+    const x=Math.max(0,Math.floor(left)-8),y=Math.max(0,Math.floor(top)-8);
+    const width=Math.max(1,Math.min(canvas.width,Math.ceil(right)+8)-x);
+    const height=Math.max(1,Math.min(canvas.height,Math.ceil(bottom)+8)-y);
+    const output=document.createElement('canvas');output.width=width;output.height=height;
+    output.getContext('2d').drawImage(canvas,x,y,width,height,0,0,width,height);
+    const factor=Math.min(.4,240/width,110/height);
+    return {kind:'signature',label:'توقيع',w:Math.max(80,Math.round(width*factor)),h:Math.max(44,Math.round(height*factor)),image:output.toDataURL('image/png')};
+}
+function initSignatureEditor(){
+    const canvas=$('signatureCanvas'),dialog=$('signatureDialog');
+    const position=event=>{
+        const rect=canvas.getBoundingClientRect();
+        return {x:Math.min(canvas.width,Math.max(0,(event.clientX-rect.left)*canvas.width/rect.width)),
+            y:Math.min(canvas.height,Math.max(0,(event.clientY-rect.top)*canvas.height/rect.height))};
+    };
+    canvas.onpointerdown=event=>{
+        if(!dialog.open||signaturePointer!==null||event.button!==0||signatureStrokes.length>=120)return;
+        event.preventDefault();signaturePointer=event.pointerId;canvas.setPointerCapture(event.pointerId);
+        const stroke=[position(event)];signatureStrokes.push(stroke);
+        drawSignatureStroke(signatureContext(),stroke);syncSignatureButtons();
+    };
+    canvas.onpointermove=event=>{
+        if(event.pointerId!==signaturePointer)return;
+        event.preventDefault();
+        const stroke=signatureStrokes.at(-1);
+        if(!stroke||stroke.length>=4096)return;
+        const previous=stroke.at(-1),next=position(event);
+        if(Math.hypot(next.x-previous.x,next.y-previous.y)<1)return;
+        stroke.push(next);drawSignatureStroke(signatureContext(),[previous,next]);
+    };
+    canvas.onpointerup=canvas.onpointercancel=canvas.onlostpointercapture=endSignatureStroke;
+    window.addEventListener('blur',()=>endSignatureStroke());
+    dialog.addEventListener('close',()=>{if(!dialog.open){endSignatureStroke();signatureStrokes=[]}});
+    $('undoSignatureStroke').onclick=()=>{endSignatureStroke();signatureStrokes.pop();redrawSignature()};
+    $('clearSignature').onclick=()=>{endSignatureStroke();signatureStrokes=[];redrawSignature()};
+    $('saveSignature').onclick=()=>{
+        if(!signatureStrokes.length)return;
+        endSignatureStroke();
+        try{if(placeAnnotation(signatureImage()))dialog.close()}catch(error){toast('تعذر حفظ التوقيع')}
+    };
+}
 function addTemplate(t){
     checkpoint();let p=page(),w=Math.round(t[2]*W/210),h=Math.round(t[3]*H/297);
     const metadata=(pairId,side)=>({templateId:t[0],pairId,side});
@@ -1556,7 +1872,27 @@ async function applyCrop(){
     finally{button.disabled=false;setCropButtonText(button,'اعتماد الصورة');$('chooseAnotherImage').disabled=false;$('autoCrop').disabled=false}
 }
 function download(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),30000)}
-async function pageCanvas(p){const canvas=document.createElement('canvas');canvas.width=EXPORT_PAGE_WIDTH;canvas.height=EXPORT_PAGE_HEIGHT;const sx=canvas.width/W,sy=canvas.height/H,ctx=canvas.getContext('2d');ctx.fillStyle='white';ctx.fillRect(0,0,canvas.width,canvas.height);for(const i of p.items)if(i.image){const img=await loadImage(i.image);ctx.drawImage(img,i.x*sx,i.y*sy,i.w*sx,i.h*sy)}return canvas}
+async function pageCanvas(p){
+    const canvas=document.createElement('canvas');canvas.width=EXPORT_PAGE_WIDTH;canvas.height=EXPORT_PAGE_HEIGHT;
+    const sx=canvas.width/W,sy=canvas.height/H,ctx=canvas.getContext('2d');
+    ctx.fillStyle='white';ctx.fillRect(0,0,canvas.width,canvas.height);
+    for(const item of p.items){
+        if(item.kind==='text'){
+            await loadAnnotationFont(item);
+            ctx.save();ctx.scale(sx,sy);paintTextAnnotation(ctx,item,item.x,item.y);ctx.restore();
+        }else if(item.image){
+            const image=await loadImage(item.image);
+            let {x,y,w,h}=item;
+            if(item.kind==='signature'){
+                const fit=Math.min(w/image.width,h/image.height);
+                const imageWidth=image.width*fit,imageHeight=image.height*fit;
+                x+=(w-imageWidth)/2;y+=(h-imageHeight)/2;w=imageWidth;h=imageHeight;
+            }
+            ctx.drawImage(image,x*sx,y*sy,w*sx,h*sy);
+        }
+    }
+    return canvas;
+}
 // Small, dependency-free PDF writer; document images are embedded as JPEG streams.
 function buildPDF(images){
     const enc=new TextEncoder(),chunks=[],offsets=[0];let size=0;
@@ -1583,7 +1919,7 @@ function finishBlankPdfPrompt(choice='cancel'){
     resolve(choice);
 }
 async function choosePdfPages(snapshot){
-    const filledPages=snapshot.pages.filter(page=>page.items.some(item=>item.image));
+    const filledPages=snapshot.pages.filter(page=>page.items.some(item=>item.image||item.kind==='text'));
     const blankCount=snapshot.pages.length-filledPages.length;
     if(!blankCount)return snapshot;
 
@@ -1824,8 +2160,31 @@ document.addEventListener('pointerdown',clearSelectionOutside);
 $('addDocument').onclick=()=>$('templatesDialog').showModal();$('addPage').onclick=()=>insertWorkspacePage(state.pages.length);$('deletePage').onclick=requestDeletePage;$('fit').onclick=()=>{autoFit=true;render()};function zoom(delta){autoFit=false;scale=Math.max(.2,Math.min(2,scale+delta));render()}$('zoomIn').onclick=()=>zoom(.1);$('zoomOut').onclick=()=>zoom(-.1);$('arrange').onchange=e=>{arrange(e.target.value);e.target.value=''};
 $('undo').onclick=()=>restoreWorkspaceHistory('undo');
 $('redo').onclick=()=>restoreWorkspaceHistory('redo');
+$('addTextAnnotation').onclick=()=>{$('templatesDialog').close();openTextEditor()};
+$('addSignatureAnnotation').onclick=()=>{$('templatesDialog').close();openSignatureEditor()};
 let imagePickerTarget=null,imageLoadToken=0;
-function openImagePicker(id,fromCrop=false){if(!findItem(id))return;imagePickerTarget=id;const input=$(fromCrop?'cropFile':'file');input.value='';input.click()}
+function openImagePicker(id,fromCrop=false){
+    if(!findItem(id))return;
+    imagePickerTarget=id;
+    if(compactTouchView()){
+        const dialog=$('imageSourceDialog');
+        if(!dialog.open)dialog.showModal();
+        return;
+    }
+    const input=$(fromCrop?'cropFile':'file');input.value='';input.click();
+}
+function initPhoneImagePicker(){
+    const dialog=$('imageSourceDialog');
+    for(const [buttonId,inputId] of [['pickPhotoGallery','phoneGalleryFile'],['pickPhotoCamera','phoneCameraFile'],['pickPhotoFiles','phoneManagerFile']]){
+        const input=$(inputId);
+        $(buttonId).onclick=()=>{input.value='';input.click()};
+        input.onchange=event=>{
+            if(!input.files[0])return;
+            if(dialog.open)dialog.close();
+            void handleImageSelection(event);
+        };
+    }
+}
 async function handleImageSelection(e){
     const f=e.target.files[0],id=imagePickerTarget;e.target.value='';
     if(!f||!findItem(id))return;
@@ -1861,7 +2220,14 @@ for(const id of ['imageFilter','imageBrightness','imageContrast'])$(id).addEvent
 $('resetFilters').onclick=()=>{if(!crop)return;crop.filter='color';crop.brightness=0;crop.contrast=100;refreshCropPreview()};
 initToolbar();
 initShareOptions();initFixedViewport();initInteractionGuards();initClearAll();initActionConfirmation();initImageResolutionDialog();
-$('saveProject').onclick=()=>download(new Blob([JSON.stringify(state)],{type:'application/json'}),'مستمسكات-نسخة.json');$('loadProject').onclick=()=>$('projectFile').click();$('projectFile').onchange=e=>{const file=e.target.files[0];e.target.value='';void requestImportProject(file)};$('print').onclick=async()=>{await Promise.all([...document.querySelectorAll('.item img')].map(i=>i.decode().catch(()=>{})));window.print()};window.addEventListener('resize',()=>{render();if(crop&&$('cropDialog').open){endCropDrag();drawCrop()}});document.addEventListener('visibilitychange',()=>{if(document.hidden){clearTimeout(saveTimer);persist()}});render();restore();
+initTextEditor();initSignatureEditor();initPhoneImagePicker();
+$('saveProject').onclick=()=>download(new Blob([JSON.stringify(state)],{type:'application/json'}),'مستمسكات-نسخة.json');$('loadProject').onclick=()=>$('projectFile').click();$('projectFile').onchange=e=>{const file=e.target.files[0];e.target.value='';void requestImportProject(file)};
+$('print').onclick=async()=>{
+    const images=[...document.querySelectorAll('.item img')].map(image=>image.decode().catch(()=>{}));
+    const fonts=state.pages.flatMap(sheet=>sheet.items.filter(item=>item.kind==='text').map(loadAnnotationFont));
+    await Promise.all([...images,...fonts]);window.print();
+};
+window.addEventListener('resize',()=>{render();if(crop&&$('cropDialog').open){endCropDrag();drawCrop()}});document.addEventListener('visibilitychange',()=>{if(document.hidden){clearTimeout(saveTimer);persist()}});render();restore();
 </script>
 </html>
 
