@@ -148,7 +148,8 @@ main{padding-bottom:32px}.toast{bottom:max(20px,env(safe-area-inset-bottom))}
 #shareDialog .share-formats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .share-formats button{min-height:70px;display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center}
 .share-formats button[aria-pressed="true"]{border:2px solid #5146d8;background:#f1efff;color:#5146d8}
-#shareSend{width:100%;margin-top:12px}#shareStatus{min-height:40px;margin-top:12px}
+.share-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}#shareStatus{min-height:40px;margin-top:12px}
+.share-download-list{margin-top:12px}.share-download-list summary{cursor:pointer;color:#5146d8}
 .export-name{display:grid;gap:7px;margin:12px 0 16px}.export-name label{font-size:14px;font-weight:bold}.export-name input{width:100%;min-width:0;min-height:44px;border:1px solid #d8e0eb;border-radius:10px;padding:10px;font-size:16px;background:#fff;color:#203047}.export-name small{line-height:1.6}
 #actionMessage{white-space:pre-line}#actionDialog .actions{justify-content:flex-start;margin-top:18px}
 #resolutionOptions{display:grid;gap:9px;margin:16px 0}#resolutionOptions button{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:58px;text-align:right}#resolutionOptions bdi{direction:ltr;font-size:13px;color:#64748b}#resolutionDialog .actions{justify-content:flex-start}
@@ -181,7 +182,19 @@ main{padding-bottom:32px}.toast{bottom:max(20px,env(safe-area-inset-bottom))}
     </div>
 </header>
 <main id="workspace" aria-label="مساحة العمل"><div id="pages"></div><div class="page-end-actions"><button id="addPage"><svg class="toolbar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 3H5v18h14V8l-5-5v5h5M8 14h8M12 10v8"/></svg>إضافة صفحة</button></div></main>
-<dialog id="shareDialog"><div class="dialog-head"><h2>مشاركة المستمسكات</h2><button data-close="shareDialog" aria-label="إغلاق">✕</button></div><p class="note">اختر الصيغة لتجهيز جميع الصفحات، ثم شارك الملفات أو نزّلها. تُصدّر الصور وحدها على خلفية بيضاء.</p><div class="export-name"><label for="exportFilename">اسم الملف</label><input id="exportFilename" type="text" maxlength="120" dir="auto" autocomplete="off" spellcheck="false" aria-describedby="exportFilenameHint"><small id="exportFilenameHint">يمكن تعديل الاسم قبل المشاركة أو التنزيل. إذا تُرك فارغًا، يُستخدم «مستمسكات» مع تاريخ اليوم. تُضاف الصيغة تلقائيًا.</small></div><div class="share-formats"><button data-format="pdf" aria-pressed="false"><strong>PDF</strong><small>كل الصفحات في ملف واحد</small></button><button data-format="png" aria-pressed="false"><strong>PNG</strong><small>صور دون فقدان إضافي للجودة</small></button><button data-format="jpeg" aria-pressed="false"><strong>JPG</strong><small>صور بحجم أصغر</small></button><button data-format="webp" aria-pressed="false"><strong>WebP</strong><small>ضغط جيد للمتصفحات الحديثة</small></button></div><p id="shareStatus" class="note" role="status">اختر الصيغة المطلوبة.</p><button id="shareSend" class="primary" disabled>تجهيز الملفات أولًا</button><div id="shareFiles" aria-label="تنزيل الملفات بشكل منفصل"></div></dialog>
+<dialog id="shareDialog">
+    <div class="dialog-head"><h2>تنزيل أو مشاركة المستمسكات</h2><button data-close="shareDialog" aria-label="إغلاق">✕</button></div>
+    <p class="note">اختر الصيغة لتجهيز جميع الصفحات، ثم اختر تنزيل الملف أو مشاركته.</p>
+    <div class="export-name"><label for="exportFilename">اسم الملف</label><input id="exportFilename" type="text" maxlength="120" dir="auto" autocomplete="off" spellcheck="false" aria-describedby="exportFilenameHint"><small id="exportFilenameHint">يمكن تعديل الاسم قبل المشاركة أو التنزيل. إذا تُرك فارغًا، يُستخدم «مستمسكات» مع تاريخ اليوم. تُضاف الصيغة تلقائيًا.</small></div>
+    <div class="share-formats"><button data-format="pdf" aria-pressed="false"><strong>PDF</strong><small>كل الصفحات في ملف واحد</small></button><button data-format="png" aria-pressed="false"><strong>PNG</strong><small>صور دون فقدان إضافي للجودة</small></button><button data-format="jpeg" aria-pressed="false"><strong>JPG</strong><small>صور بحجم أصغر</small></button><button data-format="webp" aria-pressed="false"><strong>WebP</strong><small>ضغط جيد للمتصفحات الحديثة</small></button></div>
+    <p id="shareStatus" class="note" role="status">اختر الصيغة المطلوبة.</p>
+    <div class="share-actions">
+        <button id="shareSend" class="primary" type="button" aria-describedby="shareAvailability" disabled>مشاركة الملف</button>
+        <button id="shareDownload" type="button" disabled>تنزيل الملف</button>
+    </div>
+    <p id="shareAvailability" class="note" hidden>المشاركة المباشرة غير متاحة لهذا التصدير في المتصفح.</p>
+    <details id="shareDownloadList" class="share-download-list" hidden><summary>تنزيل كل صفحة على حدة</summary><div id="shareFiles"></div></details>
+</dialog>
 <dialog id="blankPdfDialog" aria-labelledby="blankPdfTitle" aria-describedby="blankPdfMessage">
     <h2 id="blankPdfTitle">صفحات فارغة في ملف PDF</h2>
     <p id="blankPdfMessage" class="note"></p>
@@ -1978,8 +1991,20 @@ function renamePreparedExports(){
         const link=document.createElement('a');link.href=file.url;link.download=file.name;link.textContent='تنزيل '+file.name;$('shareFiles').append(link);
     });
 }
-function clearPreparedExports(){finishBlankPdfPrompt();for(const file of preparedExports)if(file.url)URL.revokeObjectURL(file.url);preparedExports=[];$('shareFiles').replaceChildren();$('shareSend').disabled=true}
-function openShareOptions(){shareExportToken++;clearPreparedExports();const name=exportBaseName('');$('exportFilename').value=name;$('exportFilename').placeholder=name;$('shareStatus').textContent='عدّل اسم الملف إذا رغبت، ثم اختر الصيغة لتجهيز جميع الصفحات.';document.querySelectorAll('#shareDialog [data-format]').forEach(button=>{button.disabled=false;button.setAttribute('aria-pressed','false')});$('shareSend').textContent='تجهيز الملفات أولًا';if(!$('shareDialog').open)$('shareDialog').showModal()}
+function clearPreparedExports(){
+    finishBlankPdfPrompt();
+    for(const file of preparedExports)if(file.url)URL.revokeObjectURL(file.url);
+    preparedExports=[];
+    $('shareFiles').replaceChildren();
+    $('shareDownloadList').hidden=true;
+    $('shareDownloadList').open=false;
+    $('shareAvailability').hidden=true;
+    $('shareSend').disabled=true;
+    $('shareSend').textContent='مشاركة الملف';
+    $('shareDownload').disabled=true;
+    $('shareDownload').textContent='تنزيل الملف';
+}
+function openShareOptions(){shareExportToken++;clearPreparedExports();const name=exportBaseName('');$('exportFilename').value=name;$('exportFilename').placeholder=name;$('shareStatus').textContent='عدّل اسم الملف إذا رغبت، ثم اختر الصيغة لتجهيز جميع الصفحات.';document.querySelectorAll('#shareDialog [data-format]').forEach(button=>{button.disabled=false;button.setAttribute('aria-pressed','false')});if(!$('shareDialog').open)$('shareDialog').showModal()}
 function canvasBlob(canvas,type,quality){return new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(Error('تعذر إنشاء الصورة')),type,quality))}
 async function buildExportFiles(format,snapshot,onProgress=()=>{},isCurrent=()=>true,filename=''){
     if(!['pdf','png','jpeg','webp'].includes(format))throw Error('صيغة غير مدعومة');
@@ -2006,7 +2031,7 @@ function nativeShareFiles(files){
     try{const native=files.map(file=>new File([file.blob],file.name,{type:file.blob.type}));return navigator.canShare({files:native})?native:null}catch(error){return null}
 }
 async function exportFormat(format){
-    const token=++shareExportToken;clearPreparedExports();$('shareSend').textContent='جارٍ تجهيز الملفات…';
+    const token=++shareExportToken;clearPreparedExports();$('shareStatus').textContent='جارٍ تجهيز الملفات…';
     const isCurrent=()=>token===shareExportToken&&$('shareDialog').open;
     document.querySelectorAll('#shareDialog [data-format]').forEach(button=>{button.disabled=true;button.setAttribute('aria-pressed',String(button.dataset.format===format))});
     try{
@@ -2015,7 +2040,6 @@ async function exportFormat(format){
         if(!isCurrent())return;
         if(!snapshot){
             $('shareStatus').textContent='أُلغي تجهيز ملف PDF.';
-            $('shareSend').textContent='تجهيز الملفات أولًا';
             document.querySelectorAll('#shareDialog [data-format]').forEach(button=>button.setAttribute('aria-pressed','false'));
             return;
         }
@@ -2024,27 +2048,46 @@ async function exportFormat(format){
         preparedExports=files.map(file=>({...file,url:URL.createObjectURL(file.blob)}));
         renamePreparedExports();
         const canShare=!!nativeShareFiles(preparedExports);
-        $('shareSend').textContent=canShare?'مشاركة الملفات':'تنزيل الملفات';$('shareSend').disabled=false;
+        const multiple=files.length>1;
+        $('shareSend').textContent=multiple?'مشاركة الملفات':'مشاركة الملف';
+        $('shareSend').disabled=!canShare;
+        $('shareAvailability').hidden=canShare;
+        $('shareDownload').textContent=multiple?'تنزيل الملفات':'تنزيل الملف';
+        $('shareDownload').disabled=false;
+        $('shareDownloadList').hidden=!multiple;
         const actualTypes=[...new Set(files.map(file=>file.name.split('.').pop().toUpperCase()))].join(' / ');
-        $('shareStatus').textContent='جاهز: '+snapshot.pages.length+' صفحة • '+files.length+' ملف • '+actualTypes+'. '+(canShare?'اضغط مشاركة لاختيار التطبيق.':'المشاركة المباشرة غير متاحة في هذا المتصفح؛ يمكنك تنزيل الملفات.');
+        $('shareStatus').textContent='جاهز • '+snapshot.pages.length+' صفحة • '+files.length+' ملف • '+actualTypes;
         if(format==='webp'&&files.some(file=>file.blob.type!=='image/webp'))$('shareStatus').textContent+=' استُخدمت PNG لأن المتصفح لا يدعم تصدير WebP.';
-    }catch(error){if(token===shareExportToken){$('shareStatus').textContent='تعذر التجهيز: '+error.message;$('shareSend').textContent='اختر صيغة لإعادة المحاولة'}}
+    }catch(error){if(isCurrent()){$('shareStatus').textContent='تعذر التجهيز. '+error.message}}
     finally{if(token===shareExportToken)document.querySelectorAll('#shareDialog [data-format]').forEach(button=>button.disabled=false)}
 }
-function downloadPreparedExports(){for(const file of preparedExports)download(file.blob,file.name);$('shareStatus').textContent='تم طلب تنزيل '+preparedExports.length+' ملف. إذا منع المتصفح تنزيل عدة صور، استخدم روابط الملفات أدناه.'}
-function sharePreparedExport(){
+function downloadPreparedExports(){
     if(!preparedExports.length)return;
+    for(const file of preparedExports)download(file.blob,file.name);
+    $('shareStatus').textContent=preparedExports.length===1?'تم طلب تنزيل الملف.':'تم طلب تنزيل الملفات. يمكنك تنزيل كل صفحة على حدة من القائمة أدناه.';
+}
+async function sharePreparedExport(){
+    const dialog=$('shareDialog'),button=$('shareSend'),token=shareExportToken;
+    if(!dialog.open||!preparedExports.length||button.disabled)return;
     const files=nativeShareFiles(preparedExports);
-    if(!files){downloadPreparedExports();return}
-    $('shareSend').disabled=true;
+    if(!files){button.disabled=true;$('shareAvailability').hidden=false;return}
+    const isCurrent=()=>token===shareExportToken&&dialog.open;
+    button.disabled=true;
     // Called directly from this button click, after preparation, to retain mobile user activation.
-    try{Promise.resolve(navigator.share({files,title:'المستمسكات'})).then(()=>{$('shareStatus').textContent='تمت المشاركة.'}).catch(error=>{if(error.name==='AbortError')$('shareStatus').textContent='أُلغيت المشاركة؛ الملفات جاهزة للمحاولة مجددًا.';else{$('shareStatus').textContent='تعذرت المشاركة؛ استخدم روابط التنزيل أدناه.';toast('يمكن تنزيل الملفات من الروابط داخل نافذة المشاركة')}}).finally(()=>{$('shareSend').disabled=!preparedExports.length})}
-    catch(error){$('shareSend').disabled=false;$('shareStatus').textContent='تعذرت المشاركة؛ استخدم روابط التنزيل أدناه.'}
+    try{
+        await navigator.share({files,title:'المستمسكات'});
+        if(isCurrent())$('shareStatus').textContent='سُلّمت الملفات إلى نافذة المشاركة.';
+    }catch(error){
+        if(isCurrent())$('shareStatus').textContent=error.name==='AbortError'?'أُلغيت المشاركة.':'تعذرت المشاركة في هذا المتصفح.';
+    }finally{
+        if(isCurrent())button.disabled=false;
+    }
 }
 function initShareOptions(){
     $('share').onclick=openShareOptions;
     document.querySelectorAll('#shareDialog [data-format]').forEach(button=>button.onclick=()=>exportFormat(button.dataset.format));
     $('shareSend').onclick=sharePreparedExport;
+    $('shareDownload').onclick=downloadPreparedExports;
     $('exportFilename').addEventListener('input',renamePreparedExports);
     $('shareDialog').addEventListener('close',()=>{if(!$('shareDialog').open){shareExportToken++;clearPreparedExports()}});
     const dialog=$('blankPdfDialog');
