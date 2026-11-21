@@ -8907,6 +8907,30 @@ document.addEventListener('selectstart',e=>{if(!ed(e.target))e.preventDefault()}
 document.addEventListener('dragstart',e=>{if(coarse()&&e.target&&e.target.tagName==='IMG')e.preventDefault()},true);
 })();
 </script>
+<style id="phone-idmaster-brandbar">
+@media screen and (max-width:1049px), screen and (pointer:coarse) and (max-height:500px){
+html body .app-header.web-app-header .web-brand-row{padding-inline:116px!important;overflow:visible}
+html body .app-header.web-app-header .web-brand-row .toolbar-brand{max-width:100%!important;width:auto;overflow:visible!important;padding-inline:3px;min-width:0}
+html body .app-header.web-app-header .web-brand-row .toolbar-brand-text{min-width:0;text-align:center}
+html body .app-header.web-app-header .web-brand-row .toolbar-brand h1{font-size:clamp(17px,5.4vw,24px)!important;line-height:1.15;overflow:visible}
+html body .app-header.web-app-header .web-brand-row .toolbar-brand-name{font-size:clamp(9px,2.7vw,11px)!important;white-space:nowrap}
+html body .app-header.web-app-header .web-brand-row .toolbar-brand-mark{display:none!important}
+}
+@media screen and (max-width:420px){
+html body .app-header.web-app-header .web-brand-row{padding-inline:56px!important}
+html body .app-header.web-app-header #accountButton{width:38px!important;padding:0!important;justify-content:center}
+html body .app-header.web-app-header #accountButton::after{display:none}
+}
+</style>
+<style id="phone-idmaster-spacing">
+@media screen and (max-width:1049px), screen and (pointer:coarse) and (max-height:500px){
+html body .app-header.web-app-header{row-gap:0!important;column-gap:4px!important;padding-bottom:2px!important}
+html body .app-header.web-app-header button{margin:0 0 4px!important}
+html body .app-header.web-app-header #accountButton,html body .app-header.web-app-header .web-brand-row #phoneSettingsButton{margin:0!important}
+html body .app-header.web-app-header .web-brand-row{margin-bottom:8px!important}
+html body main#workspace{padding-top:8px!important}
+}
+</style>
 <script>
 (()=>{const h=document.querySelector('.app-header');if(!h)return;let c=false;
 addEventListener('scroll',()=>{const y=scrollY;if(!c&&y>140){c=true;h.classList.add('phone-compact')}else if(c&&y<30){c=false;h.classList.remove('phone-compact')}},{passive:true})})();
