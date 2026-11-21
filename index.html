@@ -1126,6 +1126,9 @@ html:has(.web-app-header) #accountMenu { left:auto; right:0; }
 <dialog id="actionDialog" aria-labelledby="actionTitle" aria-describedby="actionMessage"><div class="dialog-head"><h2 id="actionTitle">تأكيد الإجراء</h2><button data-close="actionDialog" aria-label="إلغاء">✕</button></div><p id="actionMessage" class="note"></p><div class="actions"><button id="actionCancel" data-close="actionDialog" autofocus>إلغاء</button><button id="actionAccept" class="danger">تأكيد</button></div></dialog>
 <style>
 .document-gestures{touch-action:pan-x pan-y;transform-origin:center;outline:1.5px solid #60a5fa;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}.document-gestures.hold-lift{box-shadow:0 10px 28px #1e3a6a66;outline-width:3px;outline-color:#2563eb}
+.document-gestures.touch-direct.touch-armed{touch-action:none}
+.document-touch-shield{position:absolute;inset:0;z-index:1;background:transparent;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+.document-placeholder .caption{pointer-events:none}
 .document-image-surface{position:relative;width:100%;height:100%;flex:none;transform-origin:center;pointer-events:none}
 .page-end-actions[hidden]{display:none}
 #duplexToggle{margin-bottom:8px}
@@ -1620,7 +1623,7 @@ function render(){
 }
 function activate(id){if(state.active===id)return;state.active=id;document.querySelectorAll('.sheet-slot').forEach(s=>s.firstChild.classList.toggle('active',s.dataset.page===id));globalThis.AbassRefreshDesktopEditor?.();scheduleSave()}
 function updateToolbarLabel(id,text){const button=$(id),label=button.querySelector('.toolbar-label');if(label)label.textContent=text;else button.textContent=text;button.title=text;button.setAttribute('aria-label',text)}
-function selectItem(id){selected=id;document.querySelectorAll('.item').forEach(el=>el.classList.toggle('selected',el.dataset.id===id));updatePageInsertionClearance();globalThis.AbassRefreshDesktopEditor?.()}
+function selectItem(id){if(armedItemId&&armedItemId!==id)setArmed(null);selected=id;document.querySelectorAll('.item').forEach(el=>el.classList.toggle('selected',el.dataset.id===id));updatePageInsertionClearance();globalThis.AbassRefreshDesktopEditor?.()}
 function updatePageInsertionClearance(){
     const item=selected?findItem(selected):null,owner=item?state.pages.find(sheet=>sheet.items.includes(item)):null;
     for(const slot of document.querySelectorAll('.sheet-slot')){
@@ -1810,6 +1813,7 @@ function renderItem(i,p){
             const surface=document.createElement('div');
             surface.className='document-image-surface';
             el.insertBefore(surface,image);surface.append(image);
+            {const shield=document.createElement('div');shield.className='document-touch-shield';shield.setAttribute('aria-hidden','true');el.append(shield)}
             const cornerRadius=itemCornerRadius(i);
             if(cornerRadius){
                 const clip=document.createElement('div');
@@ -1845,6 +1849,7 @@ function updateDocumentAppearance(el,item){
     el.style.transform='';
     const surface=el.querySelector('.document-image-surface');if(surface)surface.style.transform=`rotate(${item.freeAngle||0}deg)`;
     el.classList.toggle('document-resized',documentResized(item));
+    el.classList.toggle('touch-direct',item.w*item.h<W*H*.25);el.classList.toggle('touch-armed',armedItemId===item.id);
 }
 function installDocumentGestures(el,controls,item,sheet){
     el.classList.add('document-gestures');
@@ -1867,14 +1872,15 @@ function installDocumentGestures(el,controls,item,sheet){
             gesture={id:hold.id,mode:'move',startX:hold.x,startY:hold.y,x:item.x,y:item.y,scroll:scrollY,w:item.w,h:item.h,recorded:false,hold:false,startedAt:performance.now(),touch:true};
             touchDragActive=true;el.classList.add('hold-lift');
             try{el.setPointerCapture(hold.id)}catch(error){}
-        },300);
+        },260);
         touchHold=hold;
     };
-    const end=e=>{if(!gesture||e.pointerId!==gesture.id)return;const recorded=gesture.recorded;gesture=null;touchDragActive=false;el.classList.remove('dragging','hold-lift');clearAlignmentGuides(el.parentElement);if(recorded)changed()};
-    const start=(e,mode)=>{if(e.button!==0||gesture)return;if(mode==='move'&&e.target.closest('button,input,[contenteditable]'))return;if(mode==='move'&&e.pointerType==='touch'){beginTouchHold(e);return}
+    const end=e=>{if(!gesture||e.pointerId!==gesture.id)return;const recorded=gesture.recorded,wasTouchMove=gesture.touch&&gesture.mode==='move';gesture=null;touchDragActive=false;if(wasTouchMove)armedItemId=item.id;el.classList.remove('dragging','hold-lift');clearAlignmentGuides(el.parentElement);if(recorded)changed()};
+    const start=(e,mode)=>{if(e.button!==0||gesture)return;if(mode==='move'&&e.target.closest('button,input,[contenteditable]'))return;if(mode==='move'&&e.pointerType==='touch'&&!(el.classList.contains('touch-armed')&&el.classList.contains('touch-direct'))){beginTouchHold(e);return}
         e.preventDefault();e.stopPropagation();activate(sheet.id);selectItem(item.id);
-        gesture={id:e.pointerId,mode,startX:e.clientX,startY:e.clientY,x:item.x,y:item.y,scroll:scrollY,w:item.w,h:item.h,recorded:false,hold:mode==='move'&&e.pointerType==='touch',startedAt:e.timeStamp};
-        el.setPointerCapture(e.pointerId);
+        gesture={id:e.pointerId,mode,startX:e.clientX,startY:e.clientY,x:item.x,y:item.y,scroll:scrollY,w:item.w,h:item.h,recorded:false,hold:false,startedAt:e.timeStamp,touch:e.pointerType==='touch'};
+        if(e.pointerType==='touch')touchDragActive=true;
+        try{el.setPointerCapture(e.pointerId)}catch(error){}
     };
     resize.onpointerdown=e=>start(e,'resize');el.onpointerdown=e=>start(e,'move');
     el.onpointermove=e=>{
@@ -1897,7 +1903,7 @@ function installDocumentGestures(el,controls,item,sheet){
         updateDuplexMateDuringDrag(item);
     };
     el.onpointerup=e=>{
-        if(touchHold&&touchHold.id===e.pointerId){cancelTouchHold();if(!e.target.closest('button,input,[contenteditable]')){activate(sheet.id);selectItem(item.id)}}
+        if(touchHold&&touchHold.id===e.pointerId){cancelTouchHold();if(!e.target.closest('button,input,[contenteditable]')){activate(sheet.id);selectItem(item.id);setArmed(item.id)}}
         end(e)};
     el.onpointercancel=e=>{if(touchHold&&touchHold.id===e.pointerId)cancelTouchHold();end(e)};
     el.onlostpointercapture=end;
@@ -1907,7 +1913,9 @@ function installDocumentGestures(el,controls,item,sheet){
     el.addEventListener('touchstart',()=>{try{getSelection()?.removeAllRanges()}catch(error){}},{passive:true});
 }
 // منع تمرير الصفحة أثناء سحب مستمسك بعد الضغط المطوّل (يجب أن يكون المستمع غير سلبي).
-var touchDragActive=false;
+var touchDragActive=false,armedItemId=null;
+// بعد نقرة مقصودة (أو بعد سحب بالضغط المطوّل) يصبح المستمسك «مسلَّحًا»: السحب التالي عليه يحرّكه مباشرة بدل تمرير الصفحة.
+function setArmed(id){armedItemId=id||null;document.querySelectorAll('.item.touch-armed').forEach(n=>n.classList.remove('touch-armed'));if(armedItemId){const n=document.querySelector('.item[data-id="'+CSS.escape(armedItemId)+'"]');if(n)n.classList.add('touch-armed')}}
 document.addEventListener('touchmove',e=>{if(touchDragActive&&e.cancelable)e.preventDefault()},{passive:false});
 function replacementFaceSlot(reference,previous){
     const {w,h,placedRotation}=reference;
