@@ -1713,21 +1713,34 @@ function migrateSheetRotations(project){
         delete item.sheetRotation;
     }
 }
+// يتذكّر المركز الأصلي للمستمسك أثناء التدوير المتتالي كي يعود لمكانه بعد 4 دورات (360°)
+const rotationHomes=new Map();
+function centeredRotatedFootprint(item){
+    const w=item.h,h=item.w;
+    if(!(w<=W&&h<=H))return null;
+    const home=rotationHomes.get(item.id);
+    const untouched=home&&home.x===item.x&&home.y===item.y&&home.w===item.w&&home.h===item.h;
+    const cx=untouched?home.cx:item.x+item.w/2,cy=untouched?home.cy:item.y+item.h/2;
+    return {w,h,x:Math.max(0,Math.min(cx-w/2,W-w)),y:Math.max(0,Math.min(cy-h/2,H-h)),cx,cy};
+}
 function rotatePlacedDocument(id){
     const owner=state.pages.find(p=>p.items.some(item=>item.id===id));
     const item=owner?.items.find(item=>item.id===id);
-    if(!item||(item.kind!=='text'&&(!item.image||item.kind)))return;
-    const footprint=rotatedFootprint(item);
+    if(!item||(item.kind&&item.kind!=='text'))return;
+    const centered=centeredRotatedFootprint(item);
+    const footprint=centered&&{w:centered.w,h:centered.h,x:centered.x,y:centered.y};
     if(!footprint){toast('هذا المقاس لا يتسع بعد التدوير على الورقة الحالية.');return}
-    const position=openRotationPosition(owner,item,footprint);
-    if(!position){toast('لا توجد مساحة كافية لتدوير المستند على هذه الصفحة بمقاسه الكامل.');return}
+    let position=openRotationPosition(owner,item,footprint),overlapped=false;
+    if(!position){position=footprint;overlapped=true}
     checkpoint();
     Object.assign(item,position);
     delete item.freeAngle;
     item.placedRotation=((item.placedRotation||0)+90)%360;
+    rotationHomes.set(item.id,{cx:centered.cx,cy:centered.cy,x:item.x,y:item.y,w:item.w,h:item.h});
     state.active=owner.id;
     selected=id;
     changed();
+    if(overlapped)toast('تم التدوير وتداخل المستمسك مع مستمسك آخر. حرّكه إلى المكان المناسب.');
 }
 function renderItem(i,p){
     const textItem=i.kind==='text';
@@ -1785,6 +1798,7 @@ function renderItem(i,p){
         checkpoint();i.image=null;delete i.edit;changed();
     }));
     if(textItem)controls.append(itemAction('rotate','تدوير مربع النص 90°',()=>rotatePlacedDocument(i.id)));
+    if(!i.image&&!i.kind&&!lockedBack)controls.append(itemAction('rotate','تدوير '+i.label+' 90°',()=>rotatePlacedDocument(i.id)));
     if(i.image&&!i.kind){
         if(!lockedBack)controls.append(itemAction('rotate','تدوير '+i.label+' 90°',()=>rotatePlacedDocument(i.id)));
         controls.append(itemAction('crop','قص الصورة والفلاتر: '+i.label,()=>{activate(p.id);selectItem(i.id);editItemImage(i.id)}));
@@ -7790,7 +7804,7 @@ globalThis.AbassFirebaseConfig = Object.freeze({
         <dl><div><dt>تاريخ التفعيل</dt><dd></dd></div><div><dt>مدة التفعيل</dt><dd></dd></div><div><dt>تاريخ الانتهاء</dt><dd></dd></div>
             <div><dt>الخزن السحابي</dt><dd data-cloud-state></dd></div><div data-cloud-usage-row hidden><dt>الاستخدام</dt><dd data-cloud-usage></dd></div></dl>
     </section>`;
-    const supportButton = '<button type="button" class="account-support">الدعم · واتساب <bdi>@wzeq</bdi></button>';
+    const supportButton = '<button type="button" class="account-support"><span class="account-support-label">الدعم · واتساب <bdi>@wzeq</bdi></span></button>';
     const supportUrl = 'https://wa.me/9647712602504';
     const supportDialog = document.createElement('dialog');
     supportDialog.id = 'accountSupport';
@@ -7803,7 +7817,13 @@ globalThis.AbassFirebaseConfig = Object.freeze({
     menu.id = 'accountMenu';
     menu.setAttribute('aria-labelledby', 'accountMenuTitle');
     menu.innerHTML = `
-        <div class="account-menu-header"><span>ID Master</span><strong id="accountMenuTitle">حسابي</strong></div>
+        <div class="account-menu-header">
+            <span class="account-menu-title"><i class="account-menu-avatar" aria-hidden="true"><svg viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.2 3.5-6.8 8-6.8s8 2.6 8 6.8z"/></svg></i><strong id="accountMenuTitle">حسابي</strong></span>
+            <span class="account-menu-brand" aria-hidden="true">
+                <svg viewBox="0 0 40 40" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="6" width="28" height="22" rx="5" fill="rgba(255,255,255,.2)"/><circle cx="11" cy="14" r="3" fill="#fff" stroke="none"/><path d="M7 23c0-3 2-4 4-4s4 1 4 4" stroke-linecap="round"/><path d="M19 12h8M19 17h8" stroke-linecap="round"/><circle cx="31" cy="29" r="7" fill="#5b2bd6"/><path d="M27.8 29.2l2.2 2.2 4-4.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <i></i><b><em>ID Master</em><small>ترتيب المستمسكات</small></b>
+            </span>
+        </div>
         <div class="account-menu-content">
             <p id="accountMenuUser"></p>
             ${activationCard('accountMenuEmail')}
@@ -8235,6 +8255,11 @@ globalThis.AbassFirebaseConfig = Object.freeze({
     find('accountMenuSignOut').onclick = signOut;
     find('accountMenuSettings').onclick = () => {menu.close();openProjectSettings();};
     find('accountMenuPricing').onclick = () => {menu.close();globalThis.AbassOpenPricing?.();};
+    // اتجاه الانزلاق حسب مركز القائمة (وليس حافتها اليسرى) كي يعمل على الهاتف والدسكتوب
+    function setMenuFrom() {
+        const box = menu.getBoundingClientRect();
+        menu.style.setProperty('--menu-from', box.left + box.width / 2 > window.innerWidth / 2 ? '100%' : '-100%');
+    }
     accountButton.onclick = () => {
         const active = identity.state === 'active';
         find('accountMenuUser').hidden = active;
@@ -8245,7 +8270,7 @@ globalThis.AbassFirebaseConfig = Object.freeze({
         find('accountMenuSettings').hidden = !active;
         find('accountMenuSignOut').hidden = !active;
         menu.showModal();
-        menu.style.setProperty('--menu-from', menu.offsetLeft > window.innerWidth / 2 ? '100%' : '-100%');
+        setMenuFrom();
     };
     // إغلاق بحركة انزلاق للخارج (يشمل Esc والأزرار والنقر خارج النافذة)
     const closeMenuNow = menu.close.bind(menu);
@@ -8254,6 +8279,7 @@ globalThis.AbassFirebaseConfig = Object.freeze({
         if (!menu.open || menuClosing) return;
         if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { closeMenuNow(); return; }
         menuClosing = true;
+        setMenuFrom();
         menu.classList.add('closing');
         setTimeout(() => { menu.classList.remove('closing'); menuClosing = false; closeMenuNow(); }, 180);
     };
@@ -8707,15 +8733,13 @@ html.landscape-page .paper-icon{width:27px;height:21px}
     const plans = [
         { id:'trial', name:'التجريبية', price:'مجانية', period:'بدون أي التزام', duration:'تجربة فورية', storage:'بدون خزن سحابي', kind:'guest', cta:'جرّب الآن كزائر',
             features:['كل أدوات الترتيب والطباعة', 'بدون إنشاء حساب', 'العمل يُحفظ محليًا على هذا الجهاز فقط'] },
-        { id:'basic', name:'القياسية', price:'3,000', period:'د.ع / شهر', duration:'30 يومًا', storage:'بدون خزن سحابي', cta:'تواصل للاشتراك',
+        { id:'basic', name:'القياسية', price:'3,000', period:'د.ع / 3 أشهر', duration:'90 يومًا', storage:'بدون خزن سحابي', cta:'تواصل للاشتراك',
             features:['حساب مفعّل كامل الصلاحيات', 'حفظ المشاريع على الجهاز', 'تحديثات مجانية'] },
-        { id:'silver', name:'الفضية', price:'7,500', period:'د.ع / 3 أشهر', duration:'90 يومًا', storage:'250 ميجابايت خزن سحابي', cta:'تواصل للاشتراك',
+        { id:'silver', name:'الفضية', price:'7,500', period:'د.ع / 6 أشهر', duration:'180 يومًا', storage:'500 ميجابايت خزن سحابي', cta:'تواصل للاشتراك',
             features:['كل ميزات القياسية', 'مزامنة ونسخ سحابي', 'فتح المشروع من أكثر من جهاز'] },
-        { id:'gold', name:'الذهبية', price:'13,000', period:'د.ع / 6 أشهر', duration:'180 يومًا', storage:'500 ميجابايت خزن سحابي', featured:true, cta:'تواصل للاشتراك',
+        { id:'gold', name:'الذهبية', price:'12,000', period:'د.ع / سنة', duration:'365 يومًا', storage:'1 جيجابايت خزن سحابي', featured:true, cta:'تواصل للاشتراك',
             features:['كل ميزات الفضية', 'أولوية بالدعم الفني', 'نسخ احتياطي تلقائي'] },
-        { id:'platinum', name:'البلاتينية', price:'20,000', period:'د.ع / سنة', duration:'360 يومًا', storage:'1 جيجابايت خزن سحابي', cta:'تواصل للاشتراك',
-            features:['كل الميزات مفتوحة', 'خزن سحابي موسّع', 'دعم فني مباشر'] },
-        { id:'black-pro', name:'بلاك إيديشن Pro', price:'30,000', period:'دفعة واحدة', duration:'مدى الحياة', storage:'1 جيجابايت خزن سحابي', black:true, cta:'تواصل للاشتراك',
+        { id:'black-pro', name:'بلاك إيديشن Pro', price:'15,000', period:'دفعة واحدة', duration:'مدى الحياة', storage:'1 جيجابايت خزن سحابي', black:true, cta:'تواصل للاشتراك',
             features:['شراء لمرة واحدة، بدون تجديد', 'كل الميزات مفتوحة مدى الحياة', 'أعلى أولوية للدعم الفني'] }
     ];
 
@@ -8745,14 +8769,14 @@ html.landscape-page .paper-icon{width:27px;height:21px}
 
     const style = document.createElement('style');
     style.textContent = `
-        #abassPricing{width:min(980px,calc(100% - 24px));max-height:calc(100% - 28px);border:1px solid #e2e3ed;border-radius:24px;padding:0;background:#fff;color:#203047;box-shadow:0 16px 60px #17233d22;overscroll-behavior:contain}
+        #abassPricing{width:min(1120px,calc(100% - 24px));max-height:calc(100% - 28px);border:1px solid #e2e3ed;border-radius:24px;padding:0;background:#fff;color:#203047;box-shadow:0 16px 60px #17233d22;overscroll-behavior:contain}
         #abassPricing::backdrop{background:#10224388}
         .pricing-panel{position:relative;padding:clamp(18px,4vw,34px);display:grid;gap:16px}
         .pricing-close{position:absolute;inset-inline-end:16px;top:16px;background:transparent;border:none;font-size:18px;color:#8a93a6;cursor:pointer;min-height:32px;min-width:32px}
         #abassPricing h2{margin:0;text-align:center;font-size:22px}
         .pricing-sub{margin:0;text-align:center;color:#56637c;font-size:14px}
-        .pricing-grid{display:flex;flex-wrap:wrap;gap:16px;justify-content:center}
-        .pricing-card{flex:1 1 200px;max-width:230px;background:#fff;border:1px solid #e2e3ed;border-radius:18px;padding:22px 16px 18px;display:flex;flex-direction:column;gap:10px;position:relative;box-shadow:0 1px 3px #17233d0f}
+        .pricing-grid{display:flex;flex-wrap:wrap;gap:14px;justify-content:center}
+        .pricing-card{flex:1 1 180px;max-width:188px;background:#fff;border:1px solid #e2e3ed;border-radius:18px;padding:22px 16px 18px;display:flex;flex-direction:column;gap:10px;position:relative;box-shadow:0 1px 3px #17233d0f}
         .pricing-card.is-featured{border:2px solid #185abc;box-shadow:0 10px 28px #185abc2e;transform:translateY(-6px)}
         .pricing-card.is-black{background:#15192a;border-color:#15192a;color:#fff;box-shadow:0 12px 30px #0000004d}
         .pricing-badge{position:absolute;top:-12px;inset-inline:0;margin-inline:auto;width:fit-content;background:#185abc;color:#fff;font-size:11px;font-weight:700;padding:3px 12px;border-radius:999px;white-space:nowrap}
@@ -8980,4 +9004,100 @@ html body .app-header.web-app-header.phone-compact #accountButton{display:inline
 html body .app-header.web-app-header.phone-compact :is(#arrange,#fit,#paperSizeButton,[data-orientation],#rotateSheetWithDocuments,#share,#deletePage,#clearAll){display:flex!important}
 }
 </style>
+<style id="placeholderRotateStyle">
+.item:not(.filled):not(.annotation-text) .controls .action-rotate{left:auto;right:0;top:var(--item-control-top);bottom:auto;transform:none;scale:var(--web-control-scale,1);transform-origin:center bottom;z-index:3}
+</style>
+<style id="placeholderFitStyle">
+/* محتوى الخانة الفارغة (زر إضافة صورة + الاسم) يصغر مع حجم المستمسك ولا يخرج من حوافه */
+.item:not(.filled) .document-placeholder{container-type:size;overflow:hidden;min-width:0;min-height:0}
+.item:not(.filled) .document-placeholder button{
+  font-size:max(7px,min(15px,3.9cqw,5.8cqh));
+  min-height:max(24px,min(44px,15cqh));
+  padding:0 max(5px,min(13px,3.5cqw));
+  border-radius:max(5px,min(10px,3cqw));
+  margin-bottom:min(6px,2cqh);
+  line-height:1.2;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.item:not(.filled) .document-placeholder .caption{
+  font-size:max(7px,min(17px,4.4cqw,6.6cqh));
+  line-height:1.3;padding:0 min(6px,2cqw);max-width:100%;min-height:0;overflow:hidden}
+</style>
+<style id="accountMenuRedesign">
+/* ===== التصميم الجديد لقائمة «حسابي» (هاتف + دسكتوب) ===== */
+html body #accountMenu{width:min(420px,94vw);background:linear-gradient(180deg,#f3efff 0%,#ebe5fc 100%);color:#2a1370;box-shadow:-14px 0 44px rgba(40,14,110,.28)}
+html body #accountMenu::backdrop{background:rgba(24,10,70,.55)}
+html:has(.web-app-header) body #accountMenu,html:has(.web-app-header) #accountMenu{border-radius:26px 0 0 26px}
+html body #accountMenu::after{content:'';position:absolute;inset:auto 0 0 0;height:64px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 64' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' x2='1'%3E%3Cstop offset='0' stop-color='%23cdbcfb'/%3E%3Cstop offset='1' stop-color='%237a49f2'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0 30C80 6 140 8 220 28S340 52 400 20V64H0Z' fill='url(%23g)' opacity='.85'/%3E%3Cpath d='M0 48C90 26 160 32 240 48S350 62 400 42V64H0Z' fill='%234a1fb8'/%3E%3C/svg%3E") bottom/100% 100% no-repeat;pointer-events:none;z-index:0}
 
+/* الرأس */
+html body #accountMenu .account-menu-header{position:relative;z-index:1;flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:calc(env(safe-area-inset-top,0px) + 14px) 16px 30px;font-size:14px;color:#fff;
+  background:radial-gradient(120% 140% at 85% 0%,#8a5cf6 0%,rgba(138,92,246,0) 55%),linear-gradient(120deg,#3a16a6 0%,#5a2bd9 55%,#7b4af0 100%)}
+html body #accountMenu .account-menu-header::after{content:'';position:absolute;inset:auto 0 -1px 0;height:24px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 24' preserveAspectRatio='none'%3E%3Cpath d='M0 24V12C60 -2 130 2 210 12S340 24 400 8V24Z' fill='%23f3efff'/%3E%3C/svg%3E") bottom/100% 100% no-repeat;pointer-events:none}
+html body #accountMenu .account-menu-title{display:flex;align-items:center;gap:10px;min-width:0}
+html body #accountMenu .account-menu-avatar{flex:none;width:46px;height:46px;border-radius:50%;border:2px solid rgba(255,255,255,.85);background:rgba(255,255,255,.14);display:grid;place-items:center}
+html body #accountMenu .account-menu-avatar svg{width:26px;height:26px}
+html body #accountMenu .account-menu-header strong{font-size:clamp(21px,3.4vh,27px);font-weight:800;line-height:1.2;color:#fff}
+html body #accountMenu .account-menu-brand{display:flex;align-items:center;gap:9px;direction:ltr;min-width:0}
+html body #accountMenu .account-menu-brand svg{flex:none;width:42px;height:42px}
+html body #accountMenu .account-menu-brand i{flex:none;width:1px;height:38px;background:rgba(255,255,255,.4)}
+html body #accountMenu .account-menu-brand b{display:grid;gap:1px;font-weight:400;line-height:1.1}
+html body #accountMenu .account-menu-brand em{font-style:italic;font-weight:900;font-size:clamp(20px,3.1vh,25px);letter-spacing:-.3px;color:#ece6ff}
+html body #accountMenu .account-menu-brand small{display:flex;align-items:center;gap:5px;font-size:11px;color:#fff;white-space:nowrap}
+html body #accountMenu .account-menu-brand small::before,html body #accountMenu .account-menu-brand small::after{content:'';width:10px;height:1px;background:rgba(255,255,255,.6)}
+@media(max-width:340px){html body #accountMenu .account-menu-brand small{display:none}}
+
+/* المحتوى */
+html body #accountMenu .account-menu-content{position:relative;z-index:1;padding:4px 16px calc(env(safe-area-inset-bottom,0px) + 78px);gap:clamp(8px,1.5vh,13px)}
+html body #accountMenu #accountMenuUser{padding:12px 14px;background:#fff;border:1.5px solid #d6c9f8;border-radius:18px;text-align:center;font-weight:700;color:#3b1796}
+
+/* بطاقة التفعيل */
+html body #accountMenu .account-activation{background:radial-gradient(130% 100% at 15% 0%,var(--card-base,#43536c) 0%,var(--card-deep,#223047) 72%);
+  border:2px solid var(--card-accent,#f2cf86);border-radius:22px;padding:clamp(12px,2.3vh,20px) 20px;gap:clamp(5px,1.1vh,9px);
+  box-shadow:0 10px 24px rgba(40,14,110,.25),0 0 0 1px rgba(255,255,255,.05) inset}
+html body #accountMenu .account-activation>strong{font-size:clamp(17px,2.8vh,23px);font-weight:800;color:#fff}
+html body #accountMenu .account-card-email{justify-self:end;direction:ltr;font-size:clamp(13px,2vh,17px);color:#fff;opacity:.95}
+html body #accountMenu .account-card-tier{font-size:clamp(18px,3.1vh,26px);font-weight:800;line-height:1.25}
+html body #accountMenu .account-activation dl{gap:clamp(5px,1.1vh,10px);margin-top:2px}
+html body #accountMenu .account-activation dl div{align-items:center;font-size:clamp(13px,2vh,17px);line-height:1.4}
+html body #accountMenu .account-activation dt{color:rgba(255,255,255,.92)}
+html body #accountMenu .account-activation dd{font-weight:600}
+html body #accountMenu .account-activation [data-cloud-state]{padding:5px 16px;border-radius:999px;background:#ece8fb;color:#3a2a82;font-weight:800}
+html body #accountMenu .account-activation[data-card-storage="50000000"] [data-cloud-state]{background:#c4f2db;color:#0b4c35}
+html body #accountMenu .account-activation[data-card-storage="100000000"] [data-cloud-state]{background:#cbf0ff;color:#12475c}
+html body #accountMenu .account-activation[data-card-storage="500000000"] [data-cloud-state]{background:#eadcff;color:#492778}
+html body #accountMenu .account-activation[data-card-storage="1000000000"] [data-cloud-state]{background:#ffe8ae;color:#664005}
+
+/* أزرار القائمة: لوح أيقونة يمين + عنوان + سهم يسار */
+html body #accountMenu .account-menu-content>button{display:flex;align-items:center;gap:12px;width:100%;padding:0 4px 0 0;
+  min-height:clamp(46px,6.3vh,60px);border-radius:20px;overflow:hidden;text-align:start;
+  font-size:clamp(16px,2.5vh,19px);font-weight:800;line-height:1.3;color:#3b1796;
+  background:linear-gradient(180deg,#fff 0%,#f5f1ff 100%);border:1.5px solid #c7b5f6;
+  box-shadow:0 4px 12px rgba(95,52,200,.12),inset 0 1px 0 #fff;transition:transform .12s,box-shadow .12s,filter .12s}
+html body #accountMenu .account-menu-content>button::before{content:'';flex:none;align-self:stretch;width:clamp(50px,7.4vh,64px);
+  background:var(--ico) center/46% no-repeat,linear-gradient(180deg,#ece6fd,#ddd2fa);
+  border-start-start-radius:18px;border-end-start-radius:18px}
+html body #accountMenu .account-menu-content>button::after{content:'';flex:none;width:22px;height:22px;margin-inline-start:auto;margin-inline-end:12px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M14.5 5.5L8 12l6.5 6.5' fill='none' stroke='%235b2ac9' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat}
+html body #accountMenu .account-menu-content>button:hover{background:linear-gradient(180deg,#fff 0%,#eee8ff 100%);box-shadow:0 6px 16px rgba(95,52,200,.2),inset 0 1px 0 #fff}
+html body #accountMenu .account-menu-content>button:active{transform:scale(.985);filter:brightness(.97)}
+html body #accountMenu .account-menu-content>button:focus-visible{outline:3px solid #7c5cf0;outline-offset:2px}
+html body #accountMenu #accountMenuOpen{--ico:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='8' r='4.2' fill='%234b1fb7'/%3E%3Cpath d='M4 21.5c0-4.3 3.6-7 8-7s8 2.7 8 7z' fill='%234b1fb7'/%3E%3C/svg%3E")}
+html body #accountMenu #accountMenuSettings{--ico:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='8' r='4.2' fill='%234b1fb7'/%3E%3Cpath d='M4 21.5c0-4.3 3.6-7 8-7s8 2.7 8 7z' fill='%234b1fb7'/%3E%3C/svg%3E")}
+html body #accountMenu #accountMenuPricing{--ico:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 8l4.6 4.2L12 4.5l4.4 7.7L21 8l-2 10.2H5z' fill='%234b1fb7'/%3E%3Crect x='5' y='19.8' width='14' height='2.2' rx='1.1' fill='%234b1fb7'/%3E%3C/svg%3E")}
+html body #accountMenu .account-support{--ico:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 3a9 9 0 0 0-7.8 13.5L3 21l4.6-1.2A9 9 0 1 0 12 3z' fill='none' stroke='%234b1fb7' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M9.2 8.2c.3 2.8 3 5.5 6 6.1l1.2-1.4-2.1-1-1 .8c-1-.4-2-1.4-2.4-2.4l.8-1-1-2.1z' fill='%234b1fb7'/%3E%3C/svg%3E");color:#3b1796}
+html body #accountMenu .account-support bdi{direction:ltr}
+html body #accountMenu .account-signout{--ico:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M10 4H6.5A2.5 2.5 0 0 0 4 6.5v11A2.5 2.5 0 0 0 6.5 20H10' fill='none' stroke='%23c4123f' stroke-width='2.2' stroke-linecap='round'/%3E%3Cpath d='M15 8l4 4-4 4M19 12H9.5' fill='none' stroke='%23c4123f' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");color:#c8123f;background:linear-gradient(180deg,#fff6f8 0%,#ffeaf0 100%);border-color:#f2a8bf}
+html body #accountMenu .account-signout::before{background:var(--ico) center/46% no-repeat,linear-gradient(180deg,#ffe3eb,#ffd3e0)}
+/* زائر غير مسجّل: زر الدخول بارز */
+html body #accountMenu #accountMenuUser:not([hidden])~#accountMenuOpen{color:#fff;border-color:#4a1fb8;background:linear-gradient(135deg,#5a2bd9,#7b4af0);box-shadow:0 6px 16px rgba(90,43,217,.35)}
+html body #accountMenu #accountMenuUser:not([hidden])~#accountMenuOpen::after{filter:brightness(0) invert(1)}
+/* زر الإغلاق */
+html body #accountMenu #accountMenuClose{justify-content:center;padding:0 16px;color:#5320c8;font-size:clamp(16px,2.5vh,19px);
+  background:linear-gradient(180deg,#ebe4ff,#d9cdfb);border-color:#bda9f5;min-height:clamp(44px,5.8vh,54px);border-radius:999px}
+html body #accountMenu #accountMenuClose::before,html body #accountMenu #accountMenuClose::after{display:none}
+@media(prefers-reduced-motion:reduce){html body #accountMenu .account-menu-content>button{transition:none}}
+</style>
+<style id="accountMenuRedesign2">
+html body #accountMenu .account-support-label{white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis}
+html body #accountMenu .account-activation [data-cloud-usage]{font-size:clamp(11.5px,1.75vh,14px);font-weight:500;text-align:end}
+html body #accountMenu .account-activation dl div:has([data-cloud-usage]){gap:6px}
+</style>
